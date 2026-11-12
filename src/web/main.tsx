@@ -5,6 +5,7 @@ import { BrowserRouter, Route, Routes } from 'react-router'
 import { ChecklistPage } from './features/checklist/ChecklistPage'
 import { KanbanPage } from './features/kanban/KanbanPage'
 import { MapPage } from './features/map/MapPage'
+import { InboxPage } from './features/inbox/InboxPage'
 import { MessagesPage } from './features/messages/MessagesPage'
 import { PropertyPage } from './features/properties/PropertyPage'
 import { RankingPage } from './features/ranking/RankingPage'
@@ -37,6 +38,7 @@ createRoot(document.getElementById('root')!).render(
             <Route path="mapa" element={<MapPage />} />
             <Route path="procesos" element={<KanbanPage />} />
             <Route path="visitas" element={<VisitsPage />} />
+            <Route path="pendientes" element={<InboxPage />} />
             <Route path="mensajes" element={<MessagesPage />} />
             <Route path="checklist" element={<ChecklistPage />} />
             <Route path="ajustes" element={<SettingsPage />} />

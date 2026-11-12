@@ -12,6 +12,7 @@ export const qk = {
   message: (id: string) => ['message', id] as const,
   settings: ['settings'] as const,
   shares: ['shares'] as const,
+  inbox: ['inbox'] as const,
 }
 
 export const useProperties = () => useQuery({ queryKey: qk.properties, queryFn: api.properties })

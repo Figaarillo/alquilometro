@@ -114,6 +114,7 @@ export type Details = z.infer<typeof detailsSchema>
 
 export const STATUSES = [
   ['nuevo', 'Nuevo'],
+  ['pendiente_contacto', 'Pendiente de contactar'],
   ['contactado', 'Contactado'],
   ['visita_agendada', 'Visita agendada'],
   ['visitado', 'Visitado'],
@@ -287,4 +288,15 @@ export const guestRatingSchema = z.object({
   guestName: z.string().trim().min(1, 'Poné tu nombre').max(80),
   rating: z.number().int().min(1).max(10).nullish(),
   comment: z.string().trim().max(2000).nullish(),
+})
+
+// ---- Pendientes ----
+
+export const inboxInputSchema = z.object({
+  text: z.string().trim().min(1, 'Escribí algo').max(5000),
+})
+export const inboxPatchSchema = z.object({
+  text: z.string().trim().min(1).max(5000).optional(),
+  done: z.boolean().optional(),
+  propertyId: z.uuid().nullish(),
 })

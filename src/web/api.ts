@@ -6,6 +6,7 @@ import type {
   PropertyDetail,
   PropertyListItem,
   PropertyRow,
+  InboxItem,
   ShareLink,
   SharedView,
   VisitWithProperty,
@@ -102,6 +103,11 @@ export const api = {
   deleteMessage: (id: string) => req<void>(`/messages/${id}`, { method: 'DELETE' }),
 
   settings: () => req<Settings>('/settings'),
+  inbox: () => req<InboxItem[]>('/inbox'),
+  addInbox: (text: string) => req<InboxItem>('/inbox', json('POST', { text })),
+  updateInbox: (id: string, input: { text?: string; done?: boolean; propertyId?: string | null }) =>
+    req<InboxItem>(`/inbox/${id}`, json('PATCH', input)),
+  deleteInbox: (id: string) => req<void>(`/inbox/${id}`, { method: 'DELETE' }),
   storage: () => req<{ photos: number; photoBytes: number; dbBytes: number }>('/settings/storage'),
   saveSettings: (s: Settings) => req<Settings>('/settings', json('PUT', s)),
 

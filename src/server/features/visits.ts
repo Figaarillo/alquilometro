@@ -29,7 +29,7 @@ visitsRoutes.post('/', async (c) => {
     await db
       .update(properties)
       .set({ status: 'visita_agendada', updatedAt: new Date() })
-      .where(and(eq(properties.id, input.propertyId), inArray(properties.status, ['nuevo', 'contactado'])))
+      .where(and(eq(properties.id, input.propertyId), inArray(properties.status, ['nuevo', 'pendiente_contacto', 'contactado'])))
   }
   return c.json(row, 201)
 })

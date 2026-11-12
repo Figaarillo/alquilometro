@@ -164,3 +164,14 @@ export const guestRatings = pgTable(
   },
   (t) => [index('guest_ratings_property_idx').on(t.propertyId)],
 )
+
+/** Bandeja de pendientes: números, links o notas sueltas de alquileres que todavía no cargaste. */
+export const inboxItems = pgTable('inbox_items', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  text: text('text').notNull(),
+  done: boolean('done').notNull().default(false),
+  /** Si se convirtió en alquiler, a cuál. */
+  propertyId: uuid('property_id').references(() => properties.id, { onDelete: 'set null' }),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+})

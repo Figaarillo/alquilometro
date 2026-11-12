@@ -8,6 +8,7 @@ import { seed } from './db/seed'
 import { authRoutes, requireAuth } from './features/auth'
 import { checklistRoutes } from './features/checklist'
 import { imagesRoutes } from './features/images'
+import { inboxRoutes } from './features/inbox'
 import { messagesRoutes } from './features/messages'
 import { propertiesRoutes } from './features/properties'
 import { settingsRoutes } from './features/settings'
@@ -37,6 +38,7 @@ app.route('/api/visits', visitsRoutes)
 app.route('/api/checklist', checklistRoutes)
 app.route('/api/messages', messagesRoutes)
 app.route('/api/settings', settingsRoutes)
+app.route('/api/inbox', inboxRoutes)
 app.route('/api/shares', sharesRoutes)
 app.route('/api/public', publicRoutes)
 app.all('/api/*', (c) => c.json({ error: 'Ruta inexistente' }, 404))

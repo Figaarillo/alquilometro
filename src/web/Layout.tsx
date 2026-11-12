@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, NavLink, Outlet } from 'react-router'
 import { MobileTabbar } from './components/MobileTabbar'
+import { QuickInboxDialog } from './features/inbox/QuickInboxDialog'
 import { NewPropertyDialog } from './features/properties/NewPropertyDialog'
 import { QuickVisitDialog } from './features/visits/QuickVisitDialog'
 import { useAuth } from './features/auth/AuthGate'
@@ -9,6 +10,7 @@ import { visitRange } from './lib/format'
 
 const NAV: [string, string][] = [
   ['/', 'Ranking'],
+  ['/pendientes', 'Pendientes'],
   ['/mapa', 'Mapa'],
   ['/procesos', 'Procesos'],
   ['/visitas', 'Visitas'],
@@ -21,6 +23,7 @@ const NAV: [string, string][] = [
 export function Layout() {
   const [quickVisit, setQuickVisit] = useState(false)
   const [newProperty, setNewProperty] = useState(false)
+  const [quickInbox, setQuickInbox] = useState(false)
   const visits = useVisits()
   const auth = useAuth()
   const next = visits.data?.find((v) => !v.done && new Date(v.endAt ?? v.scheduledAt).getTime() > Date.now() - 3_600_000)
@@ -44,6 +47,7 @@ export function Layout() {
               Salir
             </button>
           )}
+          <button onClick={() => setQuickInbox(true)}>+ Pendiente</button>
           <button onClick={() => setQuickVisit(true)}>+ Visita</button>
           <button className="primary" onClick={() => setNewProperty(true)}>
             + Alquiler
@@ -60,9 +64,14 @@ export function Layout() {
       <main>
         <Outlet />
       </main>
-      <MobileTabbar onNewProperty={() => setNewProperty(true)} onNewVisit={() => setQuickVisit(true)} />
+      <MobileTabbar
+        onNewProperty={() => setNewProperty(true)}
+        onNewVisit={() => setQuickVisit(true)}
+        onNewInbox={() => setQuickInbox(true)}
+      />
       {quickVisit && <QuickVisitDialog onClose={() => setQuickVisit(false)} />}
       {newProperty && <NewPropertyDialog onClose={() => setNewProperty(false)} />}
+      {quickInbox && <QuickInboxDialog onClose={() => setQuickInbox(false)} />}
     </div>
   )
 }

@@ -152,3 +152,12 @@ export interface SharedView {
   settings: import('./domain').Settings
   properties: SharedProperty[]
 }
+
+export interface InboxItem {
+  id: string
+  text: string
+  done: boolean
+  propertyId: string | null
+  createdAt: string
+  updatedAt: string
+}

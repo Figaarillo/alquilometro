@@ -12,10 +12,26 @@ interface Picked {
 }
 
 /** Alta de alquiler: datos básicos + fotos en un solo paso, con progreso y aviso al terminar. */
-export function NewPropertyDialog({ onClose }: { onClose: () => void }) {
+export interface NewPropertyInitial {
+  title?: string
+  listingUrl?: string
+  contactPhone?: string
+  description?: string
+}
+
+export function NewPropertyDialog({
+  onClose,
+  initial,
+  onCreated,
+}: {
+  onClose: () => void
+  /** Datos precargados (ej. desde Pendientes). */
+  initial?: NewPropertyInitial
+  onCreated?: (id: string) => void | Promise<void>
+}) {
   const navigate = useNavigate()
   const invalidate = useInvalidateAll()
-  const [f, setF] = useState({ title: '', listingUrl: '', contactName: '', contactPhone: '', description: '' })
+  const [f, setF] = useState({ title: '', listingUrl: '', contactName: '', contactPhone: '', description: '', ...initial })
   const [photos, setPhotos] = useState<Picked[]>([])
   const [progress, setProgress] = useState<string | null>(null)
   const saving = progress !== null
@@ -49,6 +65,7 @@ export function NewPropertyDialog({ onClose }: { onClose: () => void }) {
         description: f.description || null,
       })
       createdId = p.id
+      await onCreated?.(p.id)
 
       // De a una: si falla una foto, las anteriores ya quedaron guardadas.
       const { ok: uploaded, failed } = await uploadPhotos(
