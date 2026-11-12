@@ -16,7 +16,8 @@
     "db:generate": "drizzle-kit generate",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "db:backup": "mkdir -p backups && docker compose exec -T db pg_dump -U alquileres -d alquileres -Fc > backups/alquileres-$(date +%Y%m%d-%H%M%S).dump && echo Backup OK"
+    "db:backup": "mkdir -p backups && docker compose exec -T db pg_dump -U alquileres -d alquileres -Fc > backups/alquileres-$(date +%Y%m%d-%H%M%S).dump && echo Backup OK",
+    "db:push-railway": "bash scripts/push-db-to-railway.sh"
   },
   "dependencies": {
     "@hono/node-server": "^2.1.7",

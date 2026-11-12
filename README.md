@@ -73,9 +73,20 @@ El motor está en `src/shared/scoring.ts` y lo cubren tests (`pnpm test`).
 | `DATABASE_URL` | `${{Postgres.DATABASE_URL}}` |
 | `APP_PASSWORD` | Contraseña para tu acceso. **Obligatoria**: sin esto la app queda pública |
 | `APP_USER` | Opcional, por defecto `admin` |
+| `SESSION_SECRET` | Opcional: secreto para firmar la sesión (por defecto se deriva de la contraseña) |
 | `VITE_GOOGLE_MAPS_EMBED_KEY` | Opcional: Street View embebido (Maps Embed API) |
 
-Con `APP_PASSWORD` configurada todo pide login, **salvo** los links compartidos (`/c/<código>`).
+Con `APP_PASSWORD` configurada, la app muestra una pantalla de login. La sesión dura 30 días por dispositivo y se cierra desde el menú. Los links compartidos (`/c/<código>`) **no** piden login. Cambiar la contraseña cierra todas las sesiones abiertas.
+
+> La app es de **un solo usuario**: quien entra con esa contraseña ve todos los datos. Para mostrar alquileres a otras personas usá los links de Compartir. El multiusuario queda como posible mejora futura.
+
+### Pasar tus datos locales a Railway
+
+```bash
+pnpm db:push-railway
+```
+
+Hace un backup local, te pide la `DATABASE_PUBLIC_URL` de Railway (para tenerla, activá un TCP Proxy en Postgres → Settings → Networking) y **reemplaza** la base de Railway por la local. Cuando termines, borrá el TCP Proxy.
 
 ## Stack
 
@@ -98,6 +109,7 @@ src/
 | `pnpm db:up` | Levanta Postgres en Docker |
 | `pnpm db:generate` | Crea una migración después de cambiar `src/server/db/schema.ts` |
 | `pnpm db:backup` | Backup de la base en `backups/` |
+| `pnpm db:push-railway` | Copia la base local a Railway (reemplaza la de Railway) |
 
 ## Licencia
 
