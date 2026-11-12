@@ -130,21 +130,15 @@ const km = (n: number) => `${n.toFixed(1)} km`
 function locationFactors(p: Scorable, s: Settings, distances: { name: string; km: number }[]): Factor[] {
   const d = p.details
   const curve: [number, number][] = [[0.6, 100], [1.2, 88], [2, 65], [3, 40], [5, 10], [7, 0]]
-  const sorted = [...distances].sort((a, b) => a.km - b.km)
-  const nearest = sorted[0]
-  const farthest = sorted[sorted.length - 1]
+  // Los puntos son zonas preferidas e intercambiables: alcanza con estar cerca de una.
+  // Así, sumar una zona nueva nunca le baja el puntaje a nadie.
+  const nearest = [...distances].sort((a, b) => a.km - b.km)[0]
   return [
     {
-      label: 'Cercanía (al punto más cercano)',
-      weight: 4,
+      label: 'Cercanía a tu zona preferida más cercana',
+      weight: 6,
       score: nearest ? piecewise(curve, nearest.km) : null,
       detail: nearest ? `${nearest.name}: ${km(nearest.km)}` : 'Marcá la ubicación en el mapa',
-    },
-    {
-      label: 'Cerca de todos tus puntos',
-      weight: sorted.length > 1 ? 2 : 0,
-      score: farthest && sorted.length > 1 ? piecewise(curve, farthest.km) : null,
-      detail: farthest && sorted.length > 1 ? `${farthest.name}: ${km(farthest.km)}` : undefined,
     },
     { label: 'Ruido', weight: 1.5, score: pick({ tranquilo: 100, medio: 60, ruidoso: 15 }, d.noise) },
     { label: 'Tránsito', weight: 1, score: pick({ bajo: 100, medio: 60, alto: 20 }, d.traffic) },

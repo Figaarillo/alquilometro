@@ -44,7 +44,7 @@ El motor está en `src/shared/scoring.ts` y lo cubren tests (`pnpm test`).
    - Alquiler muy elevado.
    - Todo eléctrico.
    - Mucha humedad.
-4. **Ubicación**: distancia al Centro y a la Costanera. Corregí las coordenadas en *Ajustes* haciendo click en el mapa.
+4. **Ubicación**: distancia a la **zona preferida más cercana** (Centro, Costanera o las que sumes). Sumar una zona nunca baja el puntaje de nadie. Se configuran en *Ajustes* haciendo click en el mapa.
 
 ## Compartir
 

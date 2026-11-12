@@ -118,8 +118,11 @@ export function SettingsPage() {
       </div>
 
       <div className="card">
-        <h3>Puntos de referencia</h3>
-        <p className="muted small">Elegí un punto y hacé click en el mapa para moverlo. La ubicación puntúa por cercanía a estos puntos.</p>
+        <h3>Zonas preferidas</h3>
+        <p className="muted small">
+          Cada alquiler puntúa por la zona que tenga <strong>más cerca</strong>: estar cerca de cualquiera alcanza, y sumar una zona nunca le baja el
+          puntaje a nadie. Elegí una zona y hacé click en el mapa para moverla. Los cambios se aplican al tocar <strong>Guardar</strong>.
+        </p>
         <div className="row wrap">
           {s.refPoints.map((r, i) => (
             <div key={i} className={`ref-edit ${i === active ? 'on' : ''}`} onClick={() => setActive(i)}>
@@ -139,7 +142,12 @@ export function SettingsPage() {
           ))}
           <button
             className="small"
-            onClick={() => setS({ ...s, refPoints: [...s.refPoints, { name: 'Nuevo punto', lat: s.refPoints[0]?.lat ?? -32.41, lng: s.refPoints[0]?.lng ?? -63.24 }] })}
+            onClick={() => {
+              setS({ ...s, refPoints: [...s.refPoints, { name: 'Nuevo punto', lat: s.refPoints[0]?.lat ?? -32.41, lng: s.refPoints[0]?.lng ?? -63.24 }] })
+              // El punto nuevo queda seleccionado: el próximo click en el mapa lo mueve a él, no al Centro.
+              setActive(s.refPoints.length)
+              toast.info('Ahora hacé click en el mapa donde va el punto nuevo')
+            }}
           >
             + Punto
           </button>

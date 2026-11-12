@@ -111,6 +111,39 @@ describe('scoreProperty', () => {
   })
 })
 
+describe('puntos de referencia', () => {
+  it('agregar un punto recalcula distancias y ubicación de cada alquiler', () => {
+    const lejos = { details: ideal, lat: centro.lat - 0.04, lng: centro.lng }
+    const antes = scoreProperty(lejos, S)
+    const conPunto = { ...S, refPoints: [...S.refPoints, { name: 'Trabajo', lat: lejos.lat, lng: lejos.lng }] }
+    const despues = scoreProperty(lejos, conPunto)
+    expect(despues.distances.map((d) => d.name)).toContain('Trabajo')
+    const ub = (r: typeof antes) => r.categories.find((c) => c.key === 'ubicacion')!.score!
+    expect(ub(despues)).not.toBe(ub(antes))
+  })
+})
+
+describe('zonas preferidas', () => {
+  it('sumar una zona nunca baja el puntaje de ningún alquiler', () => {
+    const conZonaLejana = { ...S, refPoints: [...S.refPoints, { name: 'Barrio X', lat: centro.lat + 0.05, lng: centro.lng + 0.05 }] }
+    const casos = [
+      at(ideal),
+      { details: ideal, lat: centro.lat - 0.02, lng: centro.lng },
+      { details: ideal, lat: centro.lat + 0.05, lng: centro.lng + 0.05 },
+    ]
+    for (const p of casos) {
+      expect(scoreProperty(p, conZonaLejana).total!).toBeGreaterThanOrEqual(scoreProperty(p, S).total!)
+    }
+  })
+
+  it('cerca de cualquier zona puntúa igual de bien', () => {
+    const zonaB = { name: 'Barrio X', lat: centro.lat + 0.05, lng: centro.lng + 0.05 }
+    const s = { ...S, refPoints: [...S.refPoints, zonaB] }
+    const ub = (lat: number, lng: number) => scoreProperty({ details: ideal, lat, lng }, s).categories.find((c) => c.key === 'ubicacion')!.score
+    expect(ub(zonaB.lat, zonaB.lng)).toBe(ub(centro.lat, centro.lng))
+  })
+})
+
 describe('mascotas y tamaño', () => {
   it('no saber si aceptan mascotas no castiga ni cuenta como dato faltante', () => {
     const r = scoreProperty(at({ ...ideal, petsAllowed: null }), S)
