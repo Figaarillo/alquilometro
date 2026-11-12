@@ -12,6 +12,8 @@ import { SettingsPage } from './features/settings/SettingsPage'
 import { SharedPage } from './features/share/SharedPage'
 import { SharesPage } from './features/share/SharesPage'
 import { VisitsPage } from './features/visits/VisitsPage'
+import { Toaster } from './components/Toaster'
+import { AuthGate } from './features/auth/AuthGate'
 import { Layout } from './Layout'
 import './styles.css'
 
@@ -24,7 +26,13 @@ createRoot(document.getElementById('root')!).render(
         <Routes>
           {/* Vista pública para invitados: sin menú ni login */}
           <Route path="c/:token" element={<SharedPage />} />
-          <Route element={<Layout />}>
+          <Route
+            element={
+              <AuthGate>
+                <Layout />
+              </AuthGate>
+            }
+          >
             <Route index element={<RankingPage />} />
             <Route path="mapa" element={<MapPage />} />
             <Route path="procesos" element={<KanbanPage />} />
@@ -37,6 +45,7 @@ createRoot(document.getElementById('root')!).render(
           </Route>
         </Routes>
       </BrowserRouter>
+      <Toaster />
     </QueryClientProvider>
   </StrictMode>,
 )

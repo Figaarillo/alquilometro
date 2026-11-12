@@ -8,7 +8,6 @@ import { scoreProperty } from '../../../shared/scoring'
 import { api } from '../../api'
 import { BaseMap } from '../../components/BaseMap'
 import { ScoreBadge } from '../../components/ScoreBadge'
-import { Toaster } from '../../components/Toaster'
 import { moneyK } from '../../lib/format'
 import { mapsUrl, streetViewUrl, whatsappUrl } from '../../lib/links'
 import { toast } from '../../lib/toast'
@@ -76,7 +75,6 @@ export function SharedPage() {
           <SharedList token={token} view={view} onOpen={(id) => setParams({ p: id })} />
         )}
       </main>
-      <Toaster />
     </div>
   )
 }

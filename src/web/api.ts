@@ -20,6 +20,10 @@ async function req<T>(path: string, init?: RequestInit): Promise<T> {
     headers: isJson ? { 'Content-Type': 'application/json', ...init?.headers } : init?.headers,
   })
   if (!res.ok) {
+    // Sesión vencida en cualquier pantalla: el AuthGate vuelve a mostrar el login.
+    if (res.status === 401 && !path.startsWith('/auth') && !path.startsWith('/public')) {
+      window.dispatchEvent(new Event('auth:expired'))
+    }
     let msg = res.statusText
     try {
       const body = await res.json()
@@ -45,7 +49,23 @@ export interface VisitInput {
   done?: boolean
 }
 
+export interface Me {
+  authRequired: boolean
+  user: string | null
+}
+
+/** /auth/me devuelve 401 cuando falta sesión: eso no es un error, es "mostrar login". */
+async function me(): Promise<Me> {
+  const res = await fetch('/api/auth/me')
+  if (res.status === 401) return { authRequired: true, user: null }
+  if (!res.ok) throw new Error('No pude verificar la sesión')
+  return res.json()
+}
+
 export const api = {
+  me,
+  login: (username: string, password: string) => req<Me>('/auth/login', json('POST', { username, password })),
+  logout: () => req('/auth/logout', { method: 'POST' }),
   properties: () => req<PropertyListItem[]>('/properties'),
   property: (id: string) => req<PropertyDetail>(`/properties/${id}`),
   createProperty: (input: PropertyInput) => req<PropertyRow>('/properties', json('POST', input)),

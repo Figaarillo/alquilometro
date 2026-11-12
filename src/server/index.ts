@@ -1,11 +1,11 @@
 import { serve } from '@hono/node-server'
 import { serveStatic } from '@hono/node-server/serve-static'
 import { Hono } from 'hono'
-import { basicAuth } from 'hono/basic-auth'
 import { HTTPException } from 'hono/http-exception'
 import { ZodError } from 'zod'
 import { runMigrations } from './db/client'
 import { seed } from './db/seed'
+import { authRoutes, requireAuth } from './features/auth'
 import { checklistRoutes } from './features/checklist'
 import { imagesRoutes } from './features/images'
 import { messagesRoutes } from './features/messages'
@@ -17,19 +17,11 @@ import { visitsRoutes } from './features/visits'
 const app = new Hono()
 
 /**
- * Lo único público: la vista compartida (/c/<token>), su API (/api/public/...)
- * y los archivos estáticos del frontend. Todo lo demás pide la contraseña del dueño.
+ * La API del dueño pide sesión. Quedan abiertos: el login (/api/auth), la vista
+ * compartida (/api/public) y el frontend estático (el login lo muestra la propia app).
  */
-const isPublic = (path: string) =>
-  path.startsWith('/c/') ||
-  path.startsWith('/api/public/') ||
-  path.startsWith('/assets/') ||
-  path === '/favicon.ico'
-
-if (process.env.APP_PASSWORD) {
-  const auth = basicAuth({ username: process.env.APP_USER || 'admin', password: process.env.APP_PASSWORD })
-  app.use('*', (c, next) => (isPublic(c.req.path) ? next() : auth(c, next)))
-}
+const isPublicApi = (path: string) => path.startsWith('/api/public/') || path.startsWith('/api/auth/')
+app.use('/api/*', (c, next) => (isPublicApi(c.req.path) ? next() : requireAuth(c, next)))
 
 app.onError((err, c) => {
   if (err instanceof HTTPException) return err.getResponse()
@@ -38,6 +30,7 @@ app.onError((err, c) => {
   return c.json({ error: err.message }, 500)
 })
 
+app.route('/api/auth', authRoutes)
 app.route('/api/properties', propertiesRoutes)
 app.route('/api/images', imagesRoutes)
 app.route('/api/visits', visitsRoutes)

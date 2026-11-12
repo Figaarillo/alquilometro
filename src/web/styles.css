@@ -653,3 +653,104 @@ dl.kv .kv-row { display: contents; }
 @media (max-width: 900px) {
   .tab-item.fab.active { outline: 3px solid color-mix(in srgb, var(--primary) 35%, transparent); outline-offset: 2px; }
 }
+
+/* ---------- Login (patrón GreenBin) ---------- */
+.boot { min-height: 100vh; display: grid; place-items: center; font-size: 2.4rem; animation: boot-pulse 1.2s ease-in-out infinite; }
+@keyframes boot-pulse { 50% { opacity: 0.4; } }
+
+.login-page {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+  background: var(--bg);
+}
+.login-bg {
+  position: fixed;
+  inset: auto -20vw -30vh auto;
+  width: 90vw;
+  height: 90vw;
+  max-width: 900px;
+  max-height: 900px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, color-mix(in srgb, var(--primary) 45%, transparent), transparent 65%);
+  filter: blur(40px);
+  pointer-events: none;
+}
+.login-card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 420px;
+  background: var(--surface);
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgb(0 0 0 / 0.14);
+  animation: auth-card-in 320ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes auth-card-in { from { opacity: 0; transform: translateY(24px); } }
+.login-hero {
+  background: linear-gradient(150deg, var(--primary), color-mix(in srgb, var(--primary) 55%, #000));
+  color: #fff;
+  text-align: center;
+  padding: 30px 28px 26px;
+}
+.login-hero .hero-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: rgb(255 255 255 / 0.18);
+  display: inline-grid;
+  place-items: center;
+  margin-bottom: 10px;
+}
+.login-hero h2 { margin: 0; font-size: 1.45rem; letter-spacing: -0.01em; }
+.login-hero p { margin: 0.35rem 0 0; opacity: 0.85; font-size: 0.92rem; }
+.login-body { padding: 24px 24px 22px; display: grid; gap: 0.8rem; }
+.login-field {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  padding: 0 0.4rem 0 0.9rem;
+  color: var(--muted);
+  background: var(--surface);
+  transition: border-color 0.15s;
+}
+.login-field:focus-within { border-color: var(--primary); color: var(--primary); }
+.login-field input { border: 0; padding: 0.85rem 0; background: transparent; color: var(--text); font-size: 16px; }
+.login-field input:focus { outline: none; }
+.login-field .eye { padding: 0.4rem; color: var(--muted); }
+.login-error { background: color-mix(in srgb, var(--bad) 12%, transparent); color: var(--bad); border-radius: 10px; padding: 0.55rem 0.8rem; font-size: 0.9rem; font-weight: 600; }
+.btn-submit {
+  justify-content: center;
+  width: 100%;
+  margin-top: 0.3rem;
+  padding: 0.8rem 1.2rem;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(150deg, var(--primary), color-mix(in srgb, var(--primary) 60%, #000));
+  color: #fff;
+  font-weight: 700;
+  font-size: 1rem;
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--primary) 35%, transparent);
+}
+.login-note { text-align: center; margin: 0.2rem 0 0; }
+
+@media (max-width: 900px) {
+  /* Mobile: card "glass" flotando sobre el fondo, como en GreenBin */
+  .login-page { align-items: flex-end; padding: 0; background: linear-gradient(170deg, var(--primary), color-mix(in srgb, var(--primary) 40%, #000)); }
+  .login-bg { display: none; }
+  .login-card { max-width: none; border-radius: 26px 26px 0 0; box-shadow: none; background: transparent; }
+  .login-hero { background: transparent; padding: 0 28px 32px; }
+  .login-body {
+    background: var(--surface);
+    border-radius: 26px 26px 0 0;
+    padding: 28px 22px calc(28px + env(safe-area-inset-bottom));
+  }
+}

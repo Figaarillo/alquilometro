@@ -1,6 +1,7 @@
-import { CalendarDays, CalendarPlus, Columns3, House, ListChecks, Map, Menu, MessageSquareText, Plus, Settings, Share2, Trophy } from 'lucide-react'
+import { CalendarDays, CalendarPlus, Columns3, House, ListChecks, LogOut, Map, Menu, MessageSquareText, Plus, Settings, Share2, Trophy } from 'lucide-react'
 import { useState, type ComponentType } from 'react'
 import { NavLink, useNavigate } from 'react-router'
+import { useAuth } from '../features/auth/AuthGate'
 import { BottomSheet } from './BottomSheet'
 
 type Icon = ComponentType<{ size?: number }>
@@ -25,6 +26,7 @@ function Tab({ to, label, icon: I }: { to: string; label: string; icon: Icon }) 
 /** Tabbar flotante solo en mobile: Menú · Visitas · [Ranking] · Mapa · Agregar. */
 export function MobileTabbar({ onNewProperty, onNewVisit }: { onNewProperty: () => void; onNewVisit: () => void }) {
   const navigate = useNavigate()
+  const auth = useAuth()
   const [sheet, setSheet] = useState<'menu' | 'actions' | null>(null)
   const close = () => setSheet(null)
   const go = (to: string) => {
@@ -59,6 +61,19 @@ export function MobileTabbar({ onNewProperty, onNewVisit }: { onNewProperty: () 
               </button>
             </li>
           ))}
+          {auth.authRequired && (
+            <li>
+              <button
+                className="danger"
+                onClick={() => {
+                  close()
+                  void auth.logout()
+                }}
+              >
+                <LogOut size={20} /> Cerrar sesión
+              </button>
+            </li>
+          )}
         </ul>
       </BottomSheet>
 

@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { Link, NavLink, Outlet } from 'react-router'
 import { MobileTabbar } from './components/MobileTabbar'
-import { Toaster } from './components/Toaster'
 import { NewPropertyDialog } from './features/properties/NewPropertyDialog'
 import { QuickVisitDialog } from './features/visits/QuickVisitDialog'
+import { useAuth } from './features/auth/AuthGate'
 import { useVisits } from './hooks'
 import { visitRange } from './lib/format'
 
@@ -22,6 +22,7 @@ export function Layout() {
   const [quickVisit, setQuickVisit] = useState(false)
   const [newProperty, setNewProperty] = useState(false)
   const visits = useVisits()
+  const auth = useAuth()
   const next = visits.data?.find((v) => !v.done && new Date(v.endAt ?? v.scheduledAt).getTime() > Date.now() - 3_600_000)
 
   return (
@@ -38,6 +39,11 @@ export function Layout() {
           ))}
         </nav>
         <div className="top-actions desktop-only">
+          {auth.authRequired && (
+            <button className="ghost" onClick={() => void auth.logout()} title="Cerrar sesión">
+              Salir
+            </button>
+          )}
           <button onClick={() => setQuickVisit(true)}>+ Visita</button>
           <button className="primary" onClick={() => setNewProperty(true)}>
             + Alquiler
@@ -54,7 +60,6 @@ export function Layout() {
       <main>
         <Outlet />
       </main>
-      <Toaster />
       <MobileTabbar onNewProperty={() => setNewProperty(true)} onNewVisit={() => setQuickVisit(true)} />
       {quickVisit && <QuickVisitDialog onClose={() => setQuickVisit(false)} />}
       {newProperty && <NewPropertyDialog onClose={() => setNewProperty(false)} />}
