@@ -1,0 +1,14 @@
+name: alquileres # fijo: si cambia, Docker usa otro volumen y la base aparece vacía
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: alquileres
+      POSTGRES_PASSWORD: alquileres
+      POSTGRES_DB: alquileres
+    ports:
+      - "5434:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+volumes:
+  pgdata:
