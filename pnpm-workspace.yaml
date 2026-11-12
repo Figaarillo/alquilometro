@@ -1,2 +1,5 @@
+# Proyecto de un solo paquete: "." evita que pnpm 9 lo trate como monorepo vacío.
+packages:
+  - .
 allowBuilds:
   esbuild: true
