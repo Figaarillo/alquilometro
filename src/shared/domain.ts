@@ -4,7 +4,17 @@ type Opt = readonly (readonly [string, string])[]
 
 /** Opciones de cada campo enumerado: [valor, etiqueta]. Única fuente de verdad para UI y validación. */
 export const OPTIONS = {
-  kind: [['casa', 'Casa'], ['departamento', 'Departamento'], ['ph', 'PH']],
+  kind: [['casa', 'Casa'], ['departamento', 'Departamento']],
+  sizeCategory: [['chica', 'Chica'], ['mediana', 'Mediana'], ['grande', 'Grande']],
+  equipment: [
+    ['calefactor', 'Calefactor'],
+    ['cocina', 'Cocina'],
+    ['aire', 'Aire acondicionado'],
+    ['termotanque', 'Termotanque / calefón'],
+    ['heladera', 'Heladera'],
+    ['lavarropas', 'Lavarropas'],
+    ['muebles', 'Muebles'],
+  ],
   condition: [['excelente', 'Excelente'], ['bueno', 'Bueno'], ['regular', 'Regular'], ['malo', 'Malo']],
   kitchen: [['separada', 'Cocina separada'], ['cocina_comedor', 'Cocina comedor'], ['integrada', 'Integrada / americana']],
   patioSurface: [['pasto', 'Pasto'], ['cemento', 'Cemento / baldosa'], ['mixto', 'Mixto'], ['tierra', 'Tierra'], ['otro', 'Otro']],
@@ -53,15 +63,21 @@ export type Patio = z.infer<typeof patioSchema>
 /** Características de la propiedad. Todo es opcional: null/undefined = "no sé todavía". */
 export const detailsSchema = z.object({
   // Tipo y espacio
-  kind: enumOf('kind').nullish(),
+  // 'ph' ya no se ofrece, pero se acepta por si quedó algún dato viejo.
+  kind: z.enum(['casa', 'departamento', 'ph']).nullish(),
   isDuplex: yesNo,
   floor: int,
   bedrooms: int,
   bathrooms: int,
   areaM2: money,
+  /** Si no sabés los m²: chica, mediana o grande. */
+  sizeCategory: enumOf('sizeCategory').nullish(),
   kitchen: enumOf('kitchen').nullish(),
   condition: enumOf('condition').nullish(),
+  /** Legado: reemplazado por equipment. */
   furnished: yesNo,
+  /** Lo que viene instalado (calefactor, cocina, aire...). */
+  equipment: z.array(enumOf('equipment')).nullish(),
   // Exteriores
   hasPatio: yesNo,
   patios: z.array(patioSchema).nullish(),

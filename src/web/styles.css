@@ -776,3 +776,7 @@ dl.kv .kv-row { display: contents; }
   .inbox-add { grid-template-columns: 1fr; }
   .inbox-add button { justify-content: center; }
 }
+.size-field { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; }
+.size-m2 { max-width: 180px; }
+.neg-flag { padding: 0.45rem 0.7rem !important; border: 1px solid var(--border); border-radius: 10px; }
+.neg-flag:has(input:checked) { border-color: var(--bad); background: color-mix(in srgb, var(--bad) 8%, transparent); }

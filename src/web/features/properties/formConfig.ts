@@ -10,6 +10,10 @@ export type FieldDef =
   | { kind: 'money'; key: K; label: string; hint?: string }
   | { kind: 'date'; key: K; label: string }
   | { kind: 'text'; key: K; label: string; placeholder?: string }
+  /** Casilla que, tildada, guarda false (ej. "No aceptan mascotas"). Sin tildar = sin dato. */
+  | { kind: 'negflag'; key: K; label: string; hint?: string }
+  /** Tamaño: chica/mediana/grande o m² exactos. */
+  | { kind: 'size' }
   | { kind: 'patios' }
 
 export interface Section {
@@ -27,10 +31,9 @@ export const SECTIONS: Section[] = [
       { kind: 'number', key: 'bedrooms', label: 'Habitaciones' },
       { kind: 'number', key: 'bathrooms', label: 'Baños' },
       { kind: 'number', key: 'floor', label: 'Piso' },
-      { kind: 'number', key: 'areaM2', label: 'Superficie', suffix: 'm²' },
+      { kind: 'size' },
       { kind: 'enum', key: 'kitchen', label: 'Cocina', options: 'kitchen' },
       { kind: 'enum', key: 'condition', label: 'Estado general', options: 'condition' },
-      { kind: 'bool', key: 'furnished', label: 'Amoblado' },
     ],
   },
   {
@@ -49,7 +52,6 @@ export const SECTIONS: Section[] = [
   {
     title: 'Costos mensuales',
     fields: [
-      { kind: 'enum', key: 'currency', label: 'Moneda', options: 'currency' },
       { kind: 'money', key: 'rent', label: 'Alquiler' },
       { kind: 'money', key: 'expenses', label: 'Expensas', hint: 'Poné 0 si no tiene' },
       { kind: 'multi', key: 'expensesInclude', label: 'Las expensas incluyen', options: 'service' },
@@ -79,7 +81,7 @@ export const SECTIONS: Section[] = [
   {
     title: 'Contrato',
     fields: [
-      { kind: 'bool', key: 'petsAllowed', label: 'Aceptan mascotas' },
+      { kind: 'negflag', key: 'petsAllowed', label: 'No aceptan mascotas', hint: 'Tildalo solo si te lo dicen' },
       { kind: 'number', key: 'contractMonths', label: 'Duración', suffix: 'meses' },
       { kind: 'number', key: 'increaseEveryMonths', label: 'Aumenta cada', suffix: 'meses' },
       { kind: 'enum', key: 'increaseIndex', label: 'Índice de aumento', options: 'increaseIndex' },
@@ -93,6 +95,7 @@ export const SECTIONS: Section[] = [
       { kind: 'enum', key: 'gas', label: 'Gas', options: 'gas' },
       { kind: 'enum', key: 'heating', label: 'Calefacción', options: 'heating' },
       { kind: 'enum', key: 'hotWater', label: 'Agua caliente', options: 'hotWater' },
+      { kind: 'multi', key: 'equipment', label: 'Viene con (instalado)', options: 'equipment' },
       { kind: 'bool', key: 'airConditioning', label: 'Aire acondicionado' },
       { kind: 'bool', key: 'fiber', label: 'Fibra óptica disponible' },
     ],

@@ -9,7 +9,7 @@ import { BaseMap } from '../../components/BaseMap'
 import { ScoreBadge } from '../../components/ScoreBadge'
 import { useAppMutation, useProperty, useSettings } from '../../hooks'
 import { toast } from '../../lib/toast'
-import { mapsUrl, streetViewEmbedUrl, streetViewUrl, whatsappUrl } from '../../lib/links'
+import { isLink, mapsUrl, streetViewEmbedUrl, streetViewUrl, whatsappUrl } from '../../lib/links'
 import { QuickVisitDialog } from '../visits/QuickVisitDialog'
 import { VisitRow } from '../visits/VisitsPage'
 import { ShareDialog } from '../share/ShareDialog'
@@ -173,7 +173,7 @@ function PropertyView({ p }: { p: PropertyDetail }) {
             <div className="card">
               <h3>Contacto</h3>
               <p>
-                {p.contactName ?? '—'} {p.contactPhone && <span className="muted">· {p.contactPhone}</span>}
+                {p.contactName ?? '—'} {p.contactPhone && <span className="muted">· {isLink(p.contactPhone) ? 'link de WhatsApp' : p.contactPhone}</span>}
               </p>
               <div className="row wrap">
                 {p.contactPhone && (
@@ -276,8 +276,8 @@ function PropertyView({ p }: { p: PropertyDetail }) {
                   <input value={draft.contactName} onChange={set('contactName')} />
                 </label>
                 <label className="field">
-                  <span className="field-label">Teléfono</span>
-                  <input value={draft.contactPhone} onChange={set('contactPhone')} inputMode="tel" placeholder="3534123456" />
+                  <span className="field-label">Teléfono o link de WhatsApp</span>
+                  <input value={draft.contactPhone} onChange={set('contactPhone')} placeholder="3534123456 o wa.me/..." />
                 </label>
               </div>
             </fieldset>

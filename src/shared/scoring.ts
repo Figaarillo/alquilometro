@@ -187,10 +187,13 @@ function spaceFactors(d: Details): Factor[] {
     },
     { label: 'Dúplex', weight: 1.5, score: bool(d.isDuplex, 100, 45) },
     {
-      label: 'Superficie',
+      // Los m² mandan; si no se publican, alcanza con "chica / mediana / grande".
+      label: 'Tamaño',
       weight: 1.5,
-      score: known(d.areaM2) ? piecewise([[30, 20], [45, 50], [60, 75], [80, 95], [100, 100]], d.areaM2) : null,
-      detail: known(d.areaM2) ? `${d.areaM2} m²` : undefined,
+      score: known(d.areaM2)
+        ? piecewise([[30, 20], [45, 50], [60, 75], [80, 95], [100, 100]], d.areaM2)
+        : pick({ chica: 40, mediana: 75, grande: 100 }, d.sizeCategory),
+      detail: known(d.areaM2) ? `${d.areaM2} m²` : (d.sizeCategory ?? undefined),
     },
     { label: 'Baños', weight: 0.5, score: known(d.bathrooms) ? (d.bathrooms >= 2 ? 100 : d.bathrooms === 1 ? 70 : 0) : null },
   ]
@@ -307,13 +310,12 @@ const REQUIRED: [string, (p: Scorable) => boolean][] = [
   ['Casa o departamento', (p) => known(p.details.kind)],
   ['Habitaciones', (p) => known(p.details.bedrooms)],
   ['Dúplex', (p) => known(p.details.isDuplex)],
-  ['Superficie', (p) => known(p.details.areaM2)],
+  ['Tamaño (m² o chica/mediana/grande)', (p) => known(p.details.areaM2) || known(p.details.sizeCategory)],
   ['Estado general', (p) => known(p.details.condition)],
   ['Patio', (p) => known(p.details.hasPatio)],
   ['Asador', (p) => known(p.details.hasGrill)],
   ['Espacios compartidos', (p) => known(p.details.hasSharedSpaces)],
   ['Cochera', (p) => known(p.details.parking)],
-  ['Mascotas', (p) => known(p.details.petsAllowed)],
   ['Gas natural', (p) => known(p.details.gas)],
   ['Calefacción', (p) => known(p.details.heating)],
   ['Agua caliente', (p) => known(p.details.hotWater)],

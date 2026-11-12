@@ -26,7 +26,18 @@ export function googleCalendarUrl(o: { title: string; start: Date; end?: Date; d
  * Link de WhatsApp. Para Argentina el número va como 549 + característica sin 0 + número sin 15.
  * Si el teléfono ya empieza con 54 se respeta tal cual.
  */
+const LINK_RE = /^(https?:\/\/|wa\.me\/|api\.whatsapp\.com|www\.)/i
+
+/** El "teléfono" a veces es un link de WhatsApp pegado tal cual. */
+export const isLink = (v: string | null | undefined) => !!v && LINK_RE.test(v.trim())
+
 export function whatsappUrl(phone: string | null | undefined, text: string) {
+  if (isLink(phone)) {
+    const raw = phone!.trim()
+    const url = new URL(/^https?:\/\//i.test(raw) ? raw : `https://${raw}`)
+    if (text) url.searchParams.set('text', text)
+    return url.toString()
+  }
   const digits = (phone ?? '').replace(/\D/g, '')
   const number = !digits ? '' : digits.startsWith('54') ? digits : `549${digits.replace(/^0/, '')}`
   return `https://wa.me/${number}?text=${encodeURIComponent(text)}`

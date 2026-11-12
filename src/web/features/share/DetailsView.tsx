@@ -2,10 +2,12 @@ import { optionLabel, type Details, type OptionKey } from '../../../shared/domai
 import { money } from '../../lib/format'
 import { SECTIONS, type FieldDef } from '../properties/formConfig'
 
-function display(f: Exclude<FieldDef, { kind: 'patios' }>, d: Details): string | null {
+function display(f: Exclude<FieldDef, { kind: 'patios' } | { kind: 'size' }>, d: Details): string | null {
   const v = d[f.key] as unknown
   if (v == null || v === '' || (Array.isArray(v) && !v.length)) return null
   switch (f.kind) {
+    case 'negflag':
+      return v === false ? 'Sí' : null
     case 'enum':
       return optionLabel(f.options as OptionKey, v as string)
     case 'multi':
@@ -39,6 +41,11 @@ export function DetailsView({ details }: { details: Details }) {
               ].filter(Boolean)
               if (parts.length) rows.push([`Patio ${i + 1}`, parts.join(' · ')])
             })
+            continue
+          }
+          if (f.kind === 'size') {
+            if (details.areaM2 != null) rows.push(['Tamaño', `${details.areaM2} m²`])
+            else if (details.sizeCategory) rows.push(['Tamaño', optionLabel('sizeCategory', details.sizeCategory)])
             continue
           }
           const value = display(f, details)

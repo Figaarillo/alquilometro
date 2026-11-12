@@ -111,6 +111,31 @@ describe('scoreProperty', () => {
   })
 })
 
+describe('mascotas y tamaño', () => {
+  it('no saber si aceptan mascotas no castiga ni cuenta como dato faltante', () => {
+    const r = scoreProperty(at({ ...ideal, petsAllowed: null }), S)
+    expect(r.adjustments.some((a) => /mascotas/i.test(a.label))).toBe(false)
+    expect(r.missing.some((m) => /mascotas/i.test(m))).toBe(false)
+  })
+
+  it('el tamaño se puede cargar como chica/mediana/grande si no sabés los m²', () => {
+    const espacio = (d: Details) => scoreProperty(at(d), S).categories.find((c) => c.key === 'espacio')!
+    const sinM2 = { ...ideal, areaM2: null }
+    const chica = espacio({ ...sinM2, sizeCategory: 'chica' }).score!
+    const grande = espacio({ ...sinM2, sizeCategory: 'grande' }).score!
+    expect(grande).toBeGreaterThan(chica)
+    expect(scoreProperty(at({ ...sinM2, sizeCategory: 'mediana' }), S).missing).not.toContain('Tamaño (m² o chica/mediana/grande)')
+  })
+
+  it('si están los m², mandan sobre la categoría', () => {
+    const f = (d: Details) =>
+      scoreProperty(at(d), S)
+        .categories.find((c) => c.key === 'espacio')!
+        .factors.find((x) => x.label === 'Tamaño')!.score
+    expect(f({ ...ideal, areaM2: 30, sizeCategory: 'grande' })).toBe(f({ ...ideal, areaM2: 30, sizeCategory: null }))
+  })
+})
+
 describe('computeCosts', () => {
   it('suma servicios estimados solo si no están incluidos en expensas', () => {
     const c = computeCosts(

@@ -40,6 +40,42 @@ function Field({ f, d, patch }: { f: FieldDef; d: Details; patch: Patch }) {
       </div>
     )
   }
+  if (f.kind === 'size') {
+    return (
+      <div className="field wide">
+        <span className="field-label">Tamaño</span>
+        <div className="size-field">
+          <Chips options={OPTIONS.sizeCategory} value={d.sizeCategory} onChange={(sizeCategory) => patch({ sizeCategory })} />
+          <div className="input-suffix size-m2">
+            <span className="muted small">o</span>
+            <input
+              type="number"
+              inputMode="decimal"
+              min={0}
+              placeholder="m²"
+              value={d.areaM2 ?? ''}
+              onChange={(e) => patch({ areaM2: e.target.value === '' ? null : Number(e.target.value) })}
+            />
+            <span>m²</span>
+          </div>
+        </div>
+        <span className="muted small">Casi nunca lo publican: si no sabés los m², elegí a ojo. Si cargás los m², mandan esos.</span>
+      </div>
+    )
+  }
+  if (f.kind === 'negflag') {
+    const on = d[f.key] === false
+    return (
+      <div className="field">
+        <span className="field-label">Condición</span>
+        <label className="switch-row neg-flag">
+          <input type="checkbox" checked={on} onChange={(e) => patch({ [f.key]: e.target.checked ? false : null } as Partial<Details>)} />
+          <span>{f.label}</span>
+        </label>
+        {f.hint && <span className="muted small">{f.hint}</span>}
+      </div>
+    )
+  }
   const value = d[f.key] as unknown
   const set = (v: unknown) => patch({ [f.key]: v } as Partial<Details>)
   const label = <span className="field-label">{f.label}</span>
@@ -115,7 +151,7 @@ export function DetailsForm({ details, onChange }: { details: Details; onChange:
           <legend>{s.title}</legend>
           <div className="fields">
             {s.fields.map((f, i) => (
-              <Field key={f.kind === 'patios' ? `patios-${i}` : f.key} f={f} d={details} patch={patch} />
+              <Field key={'key' in f ? f.key : `${f.kind}-${i}`} f={f} d={details} patch={patch} />
             ))}
           </div>
         </fieldset>

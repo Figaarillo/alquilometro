@@ -155,8 +155,8 @@ export function NewPropertyDialog({
             <input value={f.contactName} onChange={set('contactName')} placeholder="Dueño / inmobiliaria" disabled={saving} />
           </label>
           <label>
-            Teléfono
-            <input value={f.contactPhone} onChange={set('contactPhone')} placeholder="3534123456" inputMode="tel" disabled={saving} />
+            Teléfono o link de WhatsApp
+            <input value={f.contactPhone} onChange={set('contactPhone')} placeholder="3534123456 o wa.me/..." disabled={saving} />
           </label>
         </div>
 
