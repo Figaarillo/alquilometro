@@ -3,9 +3,11 @@ import { Hono } from 'hono'
 import { checkInputSchema, propertyInputSchema, propertyPatchSchema } from '../../shared/domain'
 import { db } from '../db/client'
 import { properties, propertyChecks, propertyImages, visits } from '../db/schema'
+import { ImageError, optimizeImage } from '../lib/images'
 import { ratingsForProperty } from './shares'
 
-const MAX_IMAGE_BYTES = 10 * 1024 * 1024
+/** Límite del original: el servidor lo achica después. */
+const MAX_UPLOAD_BYTES = 25 * 1024 * 1024
 
 export const propertiesRoutes = new Hono()
 
@@ -80,24 +82,39 @@ propertiesRoutes.post('/:id/images', async (c) => {
   const body = await c.req.parseBody({ all: true })
   const raw = body['files']
   const files = (Array.isArray(raw) ? raw : [raw]).filter((f): f is File => f instanceof File)
-  const valid = files.filter((f) => f.type.startsWith('image/') && f.size <= MAX_IMAGE_BYTES)
-  if (!valid.length) return c.json({ error: 'No llegaron imágenes válidas (máx. 10 MB c/u)' }, 400)
+  if (!files.length) return c.json({ error: 'No llegó ninguna foto' }, 400)
 
   const [{ max }] = await db
     .select({ max: sql<number>`coalesce(max(${propertyImages.position}), -1)::int` })
     .from(propertyImages)
     .where(eq(propertyImages.propertyId, propertyId))
 
-  const inserted: { id: string }[] = []
-  for (const [i, f] of valid.entries()) {
-    const [row] = await db
-      .insert(propertyImages)
-      .values({ propertyId, mime: f.type, data: Buffer.from(await f.arrayBuffer()), position: max + 1 + i })
-      .returning({ id: propertyImages.id })
-    inserted.push(row)
+  const inserted: { id: string; bytes: number }[] = []
+  const failed: { name: string; reason: string }[] = []
+  for (const f of files) {
+    // No confiamos en f.type: algunos celulares lo mandan vacío. sharp decide si es imagen.
+    if (f.size > MAX_UPLOAD_BYTES) {
+      failed.push({ name: f.name, reason: `pesa ${(f.size / 1024 / 1024).toFixed(0)} MB (máx. 25 MB)` })
+      continue
+    }
+    try {
+      const { data, mime } = await optimizeImage(Buffer.from(await f.arrayBuffer()), f.name)
+      const [row] = await db
+        .insert(propertyImages)
+        .values({ propertyId, mime, data, position: max + 1 + inserted.length })
+        .returning({ id: propertyImages.id })
+      inserted.push({ id: row.id, bytes: data.length })
+    } catch (err) {
+      if (!(err instanceof ImageError)) console.error('Error procesando foto', f.name, err)
+      failed.push({ name: f.name, reason: err instanceof ImageError ? err.message : 'error al procesarla' })
+    }
+  }
+
+  if (!inserted.length) {
+    return c.json({ error: `No se pudo subir: ${failed.map((x) => `${x.name} (${x.reason})`).join('; ')}`, failed }, 415)
   }
   await db.update(properties).set({ updatedAt: new Date() }).where(eq(properties.id, propertyId))
-  return c.json({ inserted, skipped: files.length - valid.length }, 201)
+  return c.json({ inserted, failed, skipped: failed.length }, 201)
 })
 
 propertiesRoutes.put('/:id/checks/:itemId', async (c) => {

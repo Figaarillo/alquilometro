@@ -5,13 +5,32 @@ import { useAppMutation } from '../../hooks'
 import { resizeImage } from '../../lib/image'
 import { toast } from '../../lib/toast'
 
+/** Achica en el celu y sube de a una foto. Devuelve cuántas subieron y el motivo de las que fallaron. */
+export async function uploadPhotos(propertyId: string, files: File[], onProgress?: (i: number, n: number) => void) {
+  let ok = 0
+  const failed: { name: string; reason: string }[] = []
+  for (const [i, file] of files.entries()) {
+    onProgress?.(i + 1, files.length)
+    try {
+      const r = await api.uploadImages(propertyId, [await resizeImage(file)])
+      ok += r.inserted.length
+      failed.push(...r.failed.map((f) => ({ name: file.name, reason: f.reason })))
+    } catch (err) {
+      failed.push({ name: file.name, reason: err instanceof Error ? err.message : 'error de red' })
+    }
+  }
+  return { ok, failed }
+}
+
 export function ImageGallery({ propertyId, images }: { propertyId: string; images: ImageMeta[] }) {
   const [open, setOpen] = useState<number | null>(null)
+  const [progress, setProgress] = useState<string | null>(null)
+  // De a una: con fotos grandes del celu, una sola petición enorme es lo que más falla.
   const upload = useAppMutation(async (files: File[]) => {
-    const resized = await Promise.all(files.map((f) => resizeImage(f)))
-    const r = await api.uploadImages(propertyId, resized)
-    if (r.skipped) toast.error(`${r.skipped} archivo(s) no eran imágenes válidas`)
-    if (r.inserted.length) toast(`${r.inserted.length} foto(s) subida(s)`)
+    const { ok, failed } = await uploadPhotos(propertyId, files, (i, n) => setProgress(`Subiendo ${i}/${n}…`))
+    setProgress(null)
+    if (ok) toast(`${ok} foto(s) subida(s)`)
+    failed.forEach((f) => toast.error(`${f.name}: ${f.reason}`))
   })
   const cover = useAppMutation(api.setCover, undefined, 'Portada actualizada')
   const remove = useAppMutation(api.deleteImage, () => setOpen(null), 'Foto borrada')
@@ -34,7 +53,7 @@ export function ImageGallery({ propertyId, images }: { propertyId: string; image
       <div className="card-head">
         <h3>Fotos ({images.length})</h3>
         <label className="button small">
-          {upload.isPending ? 'Subiendo…' : '+ Subir fotos'}
+          {upload.isPending ? (progress ?? 'Subiendo…') : '+ Subir fotos'}
           <input
             type="file"
             accept="image/*"

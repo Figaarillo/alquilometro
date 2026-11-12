@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router'
 import { api } from '../../api'
 import { Modal } from '../../components/Modal'
 import { useInvalidateAll } from '../../hooks'
-import { resizeImage } from '../../lib/image'
 import { toast } from '../../lib/toast'
+import { uploadPhotos } from './ImageGallery'
 
 interface Picked {
   file: File
@@ -51,20 +51,16 @@ export function NewPropertyDialog({ onClose }: { onClose: () => void }) {
       createdId = p.id
 
       // De a una: si falla una foto, las anteriores ya quedaron guardadas.
-      let uploaded = 0
-      for (const [i, ph] of photos.entries()) {
-        setProgress(`Subiendo fotos ${i + 1}/${photos.length}…`)
-        try {
-          await api.uploadImages(p.id, [await resizeImage(ph.file)])
-          uploaded++
-        } catch {
-          /* se informa abajo */
-        }
-      }
+      const { ok: uploaded, failed } = await uploadPhotos(
+        p.id,
+        photos.map((ph) => ph.file),
+        (i, n) => setProgress(`Subiendo fotos ${i}/${n}…`),
+      )
 
       invalidate()
-      if (uploaded < photos.length) {
-        toast.error(`Alquiler guardado, pero fallaron ${photos.length - uploaded} foto(s). Podés subirlas desde el detalle.`)
+      if (failed.length) {
+        toast.error(`Alquiler guardado, pero fallaron ${failed.length} foto(s). Podés subirlas desde el detalle.`)
+        failed.forEach((f) => toast.error(`${f.name}: ${f.reason}`))
       } else {
         toast(photos.length ? `Alquiler guardado con ${uploaded} foto(s)` : 'Alquiler guardado')
       }

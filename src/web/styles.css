@@ -754,3 +754,4 @@ dl.kv .kv-row { display: contents; }
     padding: 28px 22px calc(28px + env(safe-area-inset-bottom));
   }
 }
+.storage-meter { height: 10px; margin: 0.2rem 0 0.6rem; }

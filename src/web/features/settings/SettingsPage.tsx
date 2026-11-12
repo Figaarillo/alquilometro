@@ -1,11 +1,42 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
 import { CATEGORIES, DEFAULT_SETTINGS, type Settings } from '../../../shared/domain'
 import { api } from '../../api'
 import { BaseMap } from '../../components/BaseMap'
 import { qk, useSettings } from '../../hooks'
 import { money } from '../../lib/format'
+import { formatBytes } from '../../lib/image'
 import { toast } from '../../lib/toast'
+
+/** Límite del volumen de Postgres en Railway (plan actual). */
+const VOLUME_BYTES = 1024 ** 3
+
+function StorageCard() {
+  const q = useQuery({ queryKey: ['storage'], queryFn: api.storage })
+  if (!q.data) return null
+  const { photos, photoBytes, dbBytes } = q.data
+  const pct = Math.min(100, (dbBytes / VOLUME_BYTES) * 100)
+  const avg = photos ? photoBytes / photos : 0
+  const free = Math.max(0, VOLUME_BYTES - dbBytes)
+  return (
+    <div className="card">
+      <div className="card-head">
+        <h3>Espacio usado</h3>
+        <span className="muted small">
+          {formatBytes(dbBytes)} de 1 GB ({pct < 1 ? '<1' : Math.round(pct)}%)
+        </span>
+      </div>
+      <div className="meter wide storage-meter">
+        <span style={{ width: `${Math.max(pct, 1)}%`, background: pct > 80 ? 'var(--bad)' : pct > 60 ? 'var(--mid)' : undefined }} />
+      </div>
+      <p className="muted small">
+        {photos} fotos ({formatBytes(photoBytes)}, promedio {formatBytes(avg)} c/u).
+        {avg > 0 && ` Al ritmo actual entran ~${Math.floor(free / avg).toLocaleString('es-AR')} fotos más.`} Las fotos nuevas se
+        guardan comprimidas en WebP de hasta 1600px.
+      </p>
+    </div>
+  )
+}
 
 export function SettingsPage() {
   const current = useSettings()
@@ -40,6 +71,8 @@ export function SettingsPage() {
           </button>
         </div>
       </div>
+
+      <StorageCard />
 
       <div className="grid-2">
         <div className="card">

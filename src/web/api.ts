@@ -75,7 +75,7 @@ export const api = {
   uploadImages: (id: string, files: File[]) => {
     const fd = new FormData()
     files.forEach((f) => fd.append('files', f))
-    return req<{ inserted: { id: string }[]; skipped: number }>(`/properties/${id}/images`, { method: 'POST', body: fd })
+    return req<{ inserted: { id: string; bytes: number }[]; failed: { name: string; reason: string }[]; skipped: number }>(`/properties/${id}/images`, { method: 'POST', body: fd })
   },
   imageUrl: (id: string) => `/api/images/${id}`,
   setCover: (imageId: string) => req(`/images/${imageId}/cover`, { method: 'POST' }),
@@ -102,6 +102,7 @@ export const api = {
   deleteMessage: (id: string) => req<void>(`/messages/${id}`, { method: 'DELETE' }),
 
   settings: () => req<Settings>('/settings'),
+  storage: () => req<{ photos: number; photoBytes: number; dbBytes: number }>('/settings/storage'),
   saveSettings: (s: Settings) => req<Settings>('/settings', json('PUT', s)),
 
   shares: () => req<ShareLink[]>('/shares'),
