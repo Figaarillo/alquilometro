@@ -1,5 +1,5 @@
 import { randomBytes } from 'node:crypto'
-import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, inArray, isNotNull, lt, sql } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { DEFAULT_SHARE_OPTIONS, guestRatingSchema, shareCreateSchema, sharePatchSchema } from '../../shared/domain'
 import { db } from '../db/client'
@@ -33,7 +33,11 @@ async function setShareProperties(shareId: string, propertyIds: string[]) {
   })
 }
 
+/** Los links temporales vencidos se borran solos (no tienen valoraciones: no las permiten). */
+const purgeExpired = () => db.delete(shareLinks).where(and(isNotNull(shareLinks.expiresAt), lt(shareLinks.expiresAt, new Date())))
+
 sharesRoutes.get('/', async (c) => {
+  await purgeExpired()
   const rows = await db
     .select({
       id: shareLinks.id,
@@ -45,6 +49,7 @@ sharesRoutes.get('/', async (c) => {
       showScore: shareLinks.showScore,
       allowRatings: shareLinks.allowRatings,
       revokedAt: shareLinks.revokedAt,
+      expiresAt: shareLinks.expiresAt,
       views: shareLinks.views,
       lastViewedAt: shareLinks.lastViewedAt,
       createdAt: shareLinks.createdAt,
@@ -58,10 +63,12 @@ sharesRoutes.get('/', async (c) => {
 })
 
 sharesRoutes.post('/', async (c) => {
-  const { name, propertyIds, ...options } = shareCreateSchema.parse(await c.req.json())
+  const { name, propertyIds, expiresInHours, ...options } = shareCreateSchema.parse(await c.req.json())
+  // Temporal: vence solo y no guarda nada de los invitados (así al borrarse no se pierde ninguna valoración).
+  const temporary = expiresInHours ? { expiresAt: new Date(Date.now() + expiresInHours * 3_600_000), allowRatings: false } : {}
   const [row] = await db
     .insert(shareLinks)
-    .values({ ...DEFAULT_SHARE_OPTIONS, ...options, name, token: newToken() })
+    .values({ ...DEFAULT_SHARE_OPTIONS, ...options, ...temporary, name, token: newToken() })
     .returning()
   await setShareProperties(row.id, propertyIds)
   return c.json({ ...row, propertyIds, ratingsCount: 0 }, 201)
@@ -78,6 +85,13 @@ sharesRoutes.patch('/:id', async (c) => {
     .returning()
   if (!row) return c.json({ error: 'No existe' }, 404)
   if (propertyIds) await setShareProperties(id, propertyIds)
+  return c.json({ ok: true })
+})
+
+/** Borrar del todo. Se llevan sus valoraciones de invitados (la UI avisa antes). */
+sharesRoutes.delete('/:id', async (c) => {
+  const [row] = await db.delete(shareLinks).where(eq(shareLinks.id, c.req.param('id'))).returning({ id: shareLinks.id })
+  if (!row) return c.json({ error: 'No existe' }, 404)
   return c.json({ ok: true })
 })
 
@@ -108,7 +122,7 @@ export const publicRoutes = new Hono()
 
 async function activeShare(token: string) {
   const [share] = await db.select().from(shareLinks).where(eq(shareLinks.token, token))
-  return share && !share.revokedAt ? share : null
+  return share && !share.revokedAt && !(share.expiresAt && share.expiresAt < new Date()) ? share : null
 }
 
 async function isShared(shareId: string, propertyId: string) {

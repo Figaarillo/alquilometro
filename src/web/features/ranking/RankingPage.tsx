@@ -12,8 +12,8 @@ import { usePersistentState } from '../../lib/usePersistentState'
 type Sort = 'auto' | 'mine' | 'combo' | 'cost' | 'recent'
 
 const SORTS: [Sort, string][] = [
+  ['combo', 'Promedio (auto + mi nota)'],
   ['auto', 'Puntaje automático'],
-  ['combo', 'Combinado (auto + mío)'],
   ['mine', 'Mi valoración'],
   ['cost', 'Más barato'],
   ['recent', 'Más recientes'],
@@ -21,13 +21,13 @@ const SORTS: [Sort, string][] = [
 
 const isSort = (v: unknown): v is Sort => SORTS.some(([k]) => k === v)
 const isStatusFilter = (v: unknown): v is string =>
-  v === 'activos' || v === 'todos' || STATUSES.some(([k]) => k === v)
+  v === 'activos' || v === 'todos' || v === 'ocultos' || STATUSES.some(([k]) => k === v)
 
 export function RankingPage() {
   const props = useProperties()
   const settings = useSettings()
   // Se recuerdan al salir y volver al Ranking (y entre sesiones en este dispositivo).
-  const [sort, setSort] = usePersistentState<Sort>('ranking.sort', 'auto', isSort)
+  const [sort, setSort] = usePersistentState<Sort>('ranking.sort.v2', 'combo', isSort)
   const [status, setStatus] = usePersistentState<string>('ranking.status', 'activos', isStatusFilter)
   const [selecting, setSelecting] = useState(false)
   const [selected, setSelected] = useState<Set<string>>(new Set())
@@ -46,7 +46,12 @@ export function RankingPage() {
 
   const rows = useMemo(() => {
     const list = (props.data ?? [])
-      .filter((p) => (status === 'activos' ? p.status !== 'descartado' : status === 'todos' || p.status === status))
+      .filter((p) => {
+        // Los ocultos solo aparecen con su filtro (o en "Todas").
+        if (status === 'ocultos') return p.placement === 'oculto'
+        if (p.placement === 'oculto' && status !== 'todos') return false
+        return status === 'activos' ? p.status !== 'descartado' : status === 'todos' || p.status === status
+      })
       .map((p) => {
         const s = scoreProperty(p, settings)
         const combo =
@@ -55,6 +60,9 @@ export function RankingPage() {
       })
     const by = (f: (r: (typeof list)[number]) => number | null, asc = false) =>
       list.sort((a, b) => {
+        // "Al fondo" siempre queda debajo del resto, sea cual sea el orden.
+        const bottom = Number(a.p.placement === 'fondo') - Number(b.p.placement === 'fondo')
+        if (bottom) return bottom
         const x = f(a)
         const y = f(b)
         if (x == null) return 1
@@ -83,6 +91,7 @@ export function RankingPage() {
           <select value={status} onChange={(e) => setStatus(e.target.value)}>
             <option value="activos">Activas (sin descartadas)</option>
             <option value="todos">Todas</option>
+            <option value="ocultos">Ocultas</option>
             {STATUSES.map(([k, l]) => (
               <option key={k} value={k}>
                 {l}
@@ -115,7 +124,7 @@ export function RankingPage() {
               <li key={p.id}>
                 <Link
                   to={`/p/${p.id}`}
-                  className={`rank-card ${selecting && selected.has(p.id) ? 'selected' : ''}`}
+                  className={`rank-card ${selecting && selected.has(p.id) ? 'selected' : ''} ${p.placement !== 'normal' ? 'dimmed' : ''}`}
                   onClick={(e) => {
                     if (!selecting) return
                     e.preventDefault()
@@ -126,6 +135,7 @@ export function RankingPage() {
                     {p.coverImageId ? <img src={api.imageUrl(p.coverImageId)} alt="" loading="lazy" /> : <span>🏠</span>}
                     <span className="rank-pos">#{i + 1}</span>
                     {selecting && <span className="rank-check">{selected.has(p.id) ? '✓' : ''}</span>}
+                    {p.placement === 'oculto' && <span className="rank-hidden">Oculto</span>}
                   </div>
                   <div className="rank-body">
                     <div className="rank-title">
@@ -177,7 +187,7 @@ export function RankingPage() {
                 const overBudget = s.costs.baseMonthly != null && s.costs.baseMonthly > settings.maxMonthlyTotal
                 const warnings = s.adjustments.length + s.alerts.filter((a) => a.level !== 'info').length
                 return (
-                  <tr key={p.id} className={selected.has(p.id) ? 'row-selected' : ''}>
+                  <tr key={p.id} className={`${selected.has(p.id) ? 'row-selected' : ''} ${p.placement !== 'normal' ? 'dimmed' : ''}`}>
                     {selecting && (
                       <td>
                         <input type="checkbox" checked={selected.has(p.id)} onChange={() => toggle(p.id)} />

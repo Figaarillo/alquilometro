@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams, useSearchParams } from 'react-router'
 import { CircleMarker } from 'react-leaflet'
 import type { PropertyDetail } from '../../../shared/api'
-import { STATUSES, type Details, type Status } from '../../../shared/domain'
+import { PLACEMENTS, STATUSES, type Details, type Placement, type Status } from '../../../shared/domain'
 import { scoreProperty } from '../../../shared/scoring'
 import { api } from '../../api'
 import { BaseMap } from '../../components/BaseMap'
@@ -121,6 +121,22 @@ function PropertyView({ p }: { p: PropertyDetail }) {
             {STATUSES.map(([k, l]) => (
               <option key={k} value={k}>
                 {l}
+              </option>
+            ))}
+          </select>
+          <select
+            value={p.placement}
+            title="Dónde aparece en el ranking"
+            aria-label="Dónde aparece en el ranking"
+            onChange={(e) => {
+              const placement = e.target.value as Placement
+              const msg = { normal: 'Vuelve a su lugar en el ranking', fondo: 'Mandado al fondo del ranking', oculto: 'Oculto del ranking' }[placement]
+              update.mutate({ placement }, { onSuccess: () => toast(msg) })
+            }}
+          >
+            {PLACEMENTS.map(([k, l]) => (
+              <option key={k} value={k}>
+                Ranking: {l}
               </option>
             ))}
           </select>

@@ -22,6 +22,13 @@
       "when": 1794512500212,
       "tag": "0002_classy_goliath",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1794590699260,
+      "tag": "0003_ambiguous_polaris",
+      "breakpoints": true
     }
   ]
 }

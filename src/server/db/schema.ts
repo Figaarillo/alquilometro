@@ -20,6 +20,8 @@ export const properties = pgTable('properties', {
   contactName: text('contact_name'),
   contactPhone: text('contact_phone'),
   myRating: integer('my_rating'),
+  /** Lugar en el ranking: normal, al fondo (portada gris) u oculto. */
+  placement: text('placement').notNull().default('normal'),
   notes: text('notes'),
   details: jsonb('details').$type<Details>().notNull().default({}),
   createdAt: createdAt(),
@@ -125,6 +127,8 @@ export const shareLinks = pgTable('share_links', {
   allowRatings: boolean('allow_ratings').notNull().default(true),
   /** Revocar en vez de borrar: no se pierde nada (ni las valoraciones recibidas). */
   revokedAt: timestamp('revoked_at', { withTimezone: true }),
+  /** Links temporales: dejan de andar y se borran solos al vencer. */
+  expiresAt: timestamp('expires_at', { withTimezone: true }),
   views: integer('views').notNull().default(0),
   lastViewedAt: timestamp('last_viewed_at', { withTimezone: true }),
   createdAt: createdAt(),

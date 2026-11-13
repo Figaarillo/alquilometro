@@ -143,6 +143,15 @@ export const statusLabel = (s: string) => STATUSES.find(([k]) => k === s)?.[1] ?
 
 const str = z.string().trim().max(2000).nullish()
 
+/** Dónde aparece en el ranking. "fondo": al final con la portada gris; "oculto": solo con el filtro Ocultos. */
+export const PLACEMENTS = [
+  ['normal', 'Normal'],
+  ['fondo', 'Al fondo'],
+  ['oculto', 'Oculto'],
+] as const
+export type Placement = (typeof PLACEMENTS)[number][0]
+const PLACEMENT_KEYS = PLACEMENTS.map(([k]) => k) as unknown as [Placement, ...Placement[]]
+
 export const propertyInputSchema = z.object({
   title: z.string().trim().min(1, 'Poné un nombre').max(200),
   status: z.enum(STATUS_KEYS).optional(),
@@ -154,6 +163,7 @@ export const propertyInputSchema = z.object({
   contactName: str,
   contactPhone: str,
   myRating: z.number().int().min(1).max(10).nullish(),
+  placement: z.enum(PLACEMENT_KEYS).optional(),
   notes: z.string().max(20000).nullish(),
   details: detailsSchema.optional(),
 })
@@ -232,7 +242,8 @@ export const settingsSchema = z.object({
   maxMonthlyTotal: z.number().min(0),
   /** Alquiler a partir del cual es "muy elevado" pase lo que pase. */
   rentHardCap: z.number().min(0),
-  usdRate: z.number().min(0),
+  /** Legado: ya no se edita (no se usan publicaciones en dólares). */
+  usdRate: z.number().min(0).optional(),
   weights: z.record(z.enum(CATEGORY_KEYS), z.number().min(0).max(100)),
   refPoints: z.array(refPointSchema).max(10),
   /** Cómo se muestran y eligen las horas. */
@@ -294,6 +305,8 @@ export const DEFAULT_SHARE_OPTIONS: ShareOptions = {
 export const shareCreateSchema = shareOptionsSchema.partial().extend({
   name: z.string().trim().min(1, 'Poné un nombre').max(120),
   propertyIds: z.array(z.uuid()).min(1, 'Elegí al menos un alquiler').max(200),
+  /** Horas hasta que vence (link temporal). Sin esto, el link es permanente. */
+  expiresInHours: z.number().int().min(1).max(24 * 30).optional(),
 })
 
 export const sharePatchSchema = shareOptionsSchema.partial().extend({

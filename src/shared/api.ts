@@ -1,4 +1,4 @@
-import type { CheckState, Details, Status } from './domain'
+import type { CheckState, Details, Placement, Status } from './domain'
 
 export interface PropertyRow {
   id: string
@@ -12,6 +12,7 @@ export interface PropertyRow {
   contactName: string | null
   contactPhone: string | null
   myRating: number | null
+  placement: Placement
   notes: string | null
   details: Details
   createdAt: string
@@ -109,6 +110,7 @@ export interface ShareLink {
   showScore: boolean
   allowRatings: boolean
   revokedAt: string | null
+  expiresAt: string | null
   views: number
   lastViewedAt: string | null
   createdAt: string

@@ -112,9 +112,10 @@ export const api = {
   saveSettings: (s: Settings) => req<Settings>('/settings', json('PUT', s)),
 
   shares: () => req<ShareLink[]>('/shares'),
-  createShare: (input: { name: string; propertyIds: string[] } & Partial<ShareOptions>) => req<ShareLink>('/shares', json('POST', input)),
+  createShare: (input: { name: string; propertyIds: string[]; expiresInHours?: number } & Partial<ShareOptions>) => req<ShareLink>('/shares', json('POST', input)),
   updateShare: (id: string, input: Partial<ShareOptions> & { name?: string; propertyIds?: string[]; revoked?: boolean }) =>
     req(`/shares/${id}`, json('PATCH', input)),
+  deleteShare: (id: string) => req(`/shares/${id}`, { method: 'DELETE' }),
   shareUrl: (token: string) => `${window.location.origin}/c/${token}`,
 
   shared: (token: string) => req<SharedView>(`/public/shares/${token}`),

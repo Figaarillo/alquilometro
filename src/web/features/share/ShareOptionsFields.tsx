@@ -8,10 +8,18 @@ const LABELS: [keyof ShareOptions, string, string][] = [
   ['showContact', 'Mostrar contacto y teléfono', 'Del dueño o la inmobiliaria'],
 ]
 
-export function ShareOptionsFields({ value, onChange }: { value: ShareOptions; onChange: (v: ShareOptions) => void }) {
+export function ShareOptionsFields({
+  value,
+  onChange,
+  hide = [],
+}: {
+  value: ShareOptions
+  onChange: (v: ShareOptions) => void
+  hide?: (keyof ShareOptions)[]
+}) {
   return (
     <div className="share-options">
-      {LABELS.map(([k, label, hint]) => (
+      {LABELS.filter(([k]) => !hide.includes(k)).map(([k, label, hint]) => (
         <label key={k} className="switch-row">
           <input type="checkbox" checked={value[k]} onChange={(e) => onChange({ ...value, [k]: e.target.checked })} />
           <span>

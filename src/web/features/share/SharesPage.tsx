@@ -86,7 +86,7 @@ function EditShareDialog({ share, onClose }: { share: ShareLink; onClose: () => 
             ))}
           </ul>
         </div>
-        <ShareOptionsFields value={options} onChange={setOptions} />
+        <ShareOptionsFields value={options} onChange={setOptions} hide={share.expiresAt ? ['allowRatings'] : []} />
         <div className="form-actions">
           <button type="button" className="ghost" onClick={onClose}>
             Cancelar
@@ -101,9 +101,22 @@ function EditShareDialog({ share, onClose }: { share: ShareLink; onClose: () => 
 }
 
 export function SharesPage() {
+  const qc = useQueryClient()
   const shares = useQuery({ queryKey: qk.shares, queryFn: api.shares })
   const props = useProperties()
   const update = useUpdateShare()
+  const remove = useMutation({
+    mutationFn: api.deleteShare,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: qk.shares })
+      toast('Link borrado')
+    },
+    onError: (e) => toast.error(e.message),
+  })
+  const confirmDelete = (s: ShareLink) => {
+    const lost = s.ratingsCount ? `\n\nOjo: se borran también ${s.ratingsCount} valoración(es) que dejaron. Si las querés conservar, mejor desactivalo.` : ''
+    if (confirm(`¿Borrar “${s.name}” para siempre? El link deja de andar.${lost}`)) remove.mutate(s.id)
+  }
   const [editing, setEditing] = useState<ShareLink | null>(null)
   const titleOf = new Map((props.data ?? []).map((p) => [p.id, p.title]))
 
@@ -130,7 +143,8 @@ export function SharesPage() {
               <div>
                 <h3>{s.name}</h3>
                 <div className="muted small">
-                  {active ? '🟢 Activo' : '⚪ Desactivado'} · creado {fmtDateTime(s.createdAt)} · abierto {s.views} vez/veces
+                  {active ? '🟢 Activo' : '⚪ Desactivado'}
+                  {s.expiresAt && ` · ⏳ temporal, vence ${fmtDateTime(s.expiresAt)}`} · creado {fmtDateTime(s.createdAt)} · abierto {s.views} vez/veces
                   {s.lastViewedAt && ` (último: ${fmtDateTime(s.lastViewedAt)})`}
                   {s.ratingsCount > 0 && ` · ${s.ratingsCount} valoración(es)`}
                 </div>
@@ -147,6 +161,9 @@ export function SharesPage() {
                   }}
                 >
                   {active ? 'Desactivar' : 'Reactivar'}
+                </button>
+                <button className="small danger" title="Borrar link" aria-label="Borrar link" onClick={() => confirmDelete(s)} disabled={remove.isPending}>
+                  🗑
                 </button>
               </div>
             </div>
