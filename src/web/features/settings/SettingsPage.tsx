@@ -60,7 +60,7 @@ export function SettingsPage() {
     onError: (e) => toast.error(e.message),
   })
   const totalWeight = Object.values(s.weights).reduce((a, b) => a + b, 0) || 1
-  const num = (k: 'maxRent' | 'maxMonthlyTotal' | 'rentHardCap' | 'usdRate') => (
+  const num = (k: 'maxRent' | 'maxMonthlyTotal' | 'rentHardCap') => (
     <input type="number" min={0} value={s[k]} onChange={(e) => setS({ ...s, [k]: Number(e.target.value) })} />
   )
 
@@ -110,10 +110,6 @@ export function SettingsPage() {
           <label>
             Alquiler "muy elevado" desde <span className="muted small">{money(s.rentHardCap)}</span>
             {num('rentHardCap')}
-          </label>
-          <label>
-            Cotización US$ (para publicaciones en dólares)
-            {num('usdRate')}
           </label>
           <p className="muted small">
             Un alquiler sobre el máximo no se castiga si el total entra en el tope y además no tiene expensas o tiene cochera para auto.

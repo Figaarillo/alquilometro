@@ -182,7 +182,7 @@ describe('computeCosts', () => {
 
   it('convierte dólares y calcula el costo de entrada', () => {
     const c = computeCosts({ currency: 'USD', rent: 300, deposit: 300, advanceMonths: 1, agencyFee: 100 }, S)
-    expect(c.rent).toBe(300 * S.usdRate)
-    expect(c.entryTotal).toBe(700 * S.usdRate)
+    expect(c.rent).toBe(300 * S.usdRate!)
+    expect(c.entryTotal).toBe(700 * S.usdRate!)
   })
 })

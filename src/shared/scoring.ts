@@ -7,7 +7,7 @@
  * 3. Los "ajustes" restan puntos por cosas que te importan mucho (mascotas, presupuesto, todo eléctrico).
  * 4. La completitud dice cuánto confiar en el número y qué te falta averiguar.
  */
-import { CATEGORIES, type CategoryKey, type Details, type Settings } from './domain'
+import { CATEGORIES, DEFAULT_SETTINGS, type CategoryKey, type Details, type Settings } from './domain'
 
 export interface Factor {
   label: string
@@ -94,7 +94,7 @@ function pick<K extends string>(map: Record<K, number>, v: K | null | undefined)
 const bool = (v: boolean | null | undefined, yes: number, no: number) => (known(v) ? (v ? yes : no) : null)
 
 export function computeCosts(d: Details, s: Settings): CostSummary {
-  const toArs = (v: number | null | undefined) => (known(v) ? (d.currency === 'USD' ? v * s.usdRate : v) : null)
+  const toArs = (v: number | null | undefined) => (known(v) ? (d.currency === 'USD' ? v * (s.usdRate ?? DEFAULT_SETTINGS.usdRate!) : v) : null)
   const rent = toArs(d.rent)
   const expenses = toArs(d.expenses)
   const baseMonthly = known(rent) ? rent + (expenses ?? 0) : null
