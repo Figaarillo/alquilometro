@@ -235,10 +235,13 @@ export const settingsSchema = z.object({
   usdRate: z.number().min(0),
   weights: z.record(z.enum(CATEGORY_KEYS), z.number().min(0).max(100)),
   refPoints: z.array(refPointSchema).max(10),
+  /** Cómo se muestran y eligen las horas. */
+  timeFormat: z.enum(['24h', '12h']).optional(),
 })
 export type Settings = z.infer<typeof settingsSchema>
 
 export const DEFAULT_SETTINGS: Settings = {
+  timeFormat: '24h',
   maxRent: 550_000,
   maxMonthlyTotal: 650_000,
   rentHardCap: 700_000,

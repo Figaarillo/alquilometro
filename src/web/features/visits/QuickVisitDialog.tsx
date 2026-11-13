@@ -1,104 +1,121 @@
 import { useMemo, useState } from 'react'
+import type { Visit } from '../../../shared/api'
 import { api } from '../../api'
 import { Modal } from '../../components/Modal'
-import { useAppMutation, useProperties } from '../../hooks'
-import { toLocalInput } from '../../lib/format'
+import { TimeSelect } from '../../components/TimeSelect'
+import { useAppMutation, useProperties, useSettings } from '../../hooks'
+import { combineDateTime, toDateInput, toTimeValue } from '../../lib/format'
+import { toast } from '../../lib/toast'
+import { PropertyPicker } from './PropertyPicker'
 
-function at(daysFromToday: number, h: number, m = 0) {
+const dayFromToday = (n: number) => {
   const d = new Date()
-  d.setDate(d.getDate() + daysFromToday)
-  d.setHours(h, m, 0, 0)
-  return toLocalInput(d)
+  d.setDate(d.getDate() + n)
+  return toDateInput(d)
 }
+
+const DAYS: [string, number][] = [
+  ['Hoy', 0],
+  ['Mañana', 1],
+  ['Pasado', 2],
+]
 
 function nextRoundHour() {
   const d = new Date()
   d.setHours(d.getHours() + 1, 0, 0, 0)
-  return toLocalInput(d)
+  return d
 }
 
-const SHORTCUTS: [string, () => string][] = [
-  ['Hoy 18:00', () => at(0, 18)],
-  ['Mañana 9:30', () => at(1, 9, 30)],
-  ['Mañana 18:00', () => at(1, 18)],
-  ['Pasado 10:00', () => at(2, 10)],
-]
-
-/** Agendar una visita en 2-3 clicks. Sirve también para visitas sin propiedad (ej. pasar por la inmobiliaria). */
-export function QuickVisitDialog({ propertyId, onClose }: { propertyId?: string; onClose: () => void }) {
+/**
+ * Agendar o editar una visita. Fecha y hora van separadas: la fecha con un toque (Hoy/Mañana/Pasado
+ * o calendario) y la hora con el selector, en 24 h o AM/PM según Ajustes.
+ * Sirve también para visitas sin alquiler (ej. pasar por la inmobiliaria).
+ */
+export function QuickVisitDialog({ propertyId, visit, onClose }: { propertyId?: string; visit?: Visit; onClose: () => void }) {
   const props = useProperties()
-  const [pid, setPid] = useState(propertyId ?? '')
-  const [start, setStart] = useState(nextRoundHour())
-  const [until, setUntil] = useState('')
-  const [title, setTitle] = useState('')
-  const [location, setLocation] = useState('')
-  const [notes, setNotes] = useState('')
+  const settings = useSettings()
+  const hour12 = settings.timeFormat === '12h'
+  const editing = !!visit
+
+  const startInit = visit ? new Date(visit.scheduledAt) : nextRoundHour()
+  const [pid, setPid] = useState(visit ? (visit.propertyId ?? '') : (propertyId ?? ''))
+  const [date, setDate] = useState(toDateInput(startInit))
+  const [start, setStart] = useState(toTimeValue(startInit))
+  const [until, setUntil] = useState(visit?.endAt ? toTimeValue(new Date(visit.endAt)) : '')
+  const [title, setTitle] = useState(visit?.title ?? '')
+  const [location, setLocation] = useState(visit?.location ?? '')
+  const [notes, setNotes] = useState(visit?.notes ?? '')
 
   const options = useMemo(
-    () => (props.data ?? []).filter((p) => p.status !== 'descartado').sort((a, b) => a.title.localeCompare(b.title)),
-    [props.data],
+    () => (props.data ?? []).filter((p) => p.status !== 'descartado' || p.id === pid),
+    [props.data, pid],
   )
   const selected = options.find((p) => p.id === pid)
 
-  const save = useAppMutation(api.createVisit, onClose, 'Visita agendada')
+  const create = useAppMutation(api.createVisit, onClose, 'Visita agendada')
+  const update = useAppMutation((input: Parameters<typeof api.updateVisit>[1]) => api.updateVisit(visit!.id, input), onClose, 'Visita actualizada')
+  const saving = create.isPending || update.isPending
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault()
-    const startDate = new Date(start)
+    const startDate = combineDateTime(date, start)
     let endAt: string | null = null
     if (until) {
-      const [h, m] = until.split(':').map(Number)
-      const end = new Date(startDate)
-      end.setHours(h, m, 0, 0)
+      const end = combineDateTime(date, until)
+      if (end <= startDate) return toast.error('La hora de fin tiene que ser después del inicio')
       endAt = end.toISOString()
     }
-    save.mutate({
+    const input = {
       propertyId: pid || null,
       title: title.trim() || null,
       location: location.trim() || null,
       scheduledAt: startDate.toISOString(),
       endAt,
       notes: notes.trim() || null,
-    })
+    }
+    if (editing) update.mutate(input)
+    else create.mutate(input)
   }
 
   return (
-    <Modal title="Agendar visita" onClose={onClose}>
+    <Modal title={editing ? 'Editar visita' : 'Agendar visita'} onClose={onClose}>
       <form className="form" onSubmit={submit}>
-        <label>
-          Alquiler
-          <select value={pid} onChange={(e) => setPid(e.target.value)} autoFocus={!propertyId}>
-            <option value="">— Sin alquiler (ej. pasar por la inmobiliaria) —</option>
-            {options.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.title}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div>
+          <span className="field-label">Alquiler</span>
+          <PropertyPicker properties={options} value={pid} onChange={setPid} allowNone="Sin alquiler (ej. pasar por la inmobiliaria)" />
+        </div>
         {!pid && (
           <label>
             Título
             <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Ej: Oficina inmobiliaria X" required />
           </label>
         )}
-        <div className="chips">
-          {SHORTCUTS.map(([label, fn]) => (
-            <button type="button" key={label} className="chip" onClick={() => setStart(fn())}>
-              {label}
-            </button>
-          ))}
+
+        <div>
+          <span className="field-label">Día</span>
+          <div className="date-row">
+            <div className="chips">
+              {DAYS.map(([label, n]) => (
+                <button type="button" key={label} className={`chip ${date === dayFromToday(n) ? 'on' : ''}`} onClick={() => setDate(dayFromToday(n))}>
+                  {label}
+                </button>
+              ))}
+            </div>
+            <input type="date" value={date} onChange={(e) => e.target.value && setDate(e.target.value)} required />
+          </div>
         </div>
-        <div className="row">
-          <label>
-            Desde
-            <input type="datetime-local" value={start} onChange={(e) => setStart(e.target.value)} required />
-          </label>
-          <label>
-            Hasta (opcional)
-            <input type="time" value={until} onChange={(e) => setUntil(e.target.value)} />
-          </label>
+
+        <div className="row wrap time-row">
+          <div>
+            <span className="field-label">Desde</span>
+            <TimeSelect value={start} onChange={setStart} hour12={hour12} ariaLabel="Hora de inicio" />
+          </div>
+          <div>
+            <span className="field-label">Hasta (opcional)</span>
+            <TimeSelect value={until} onChange={setUntil} hour12={hour12} allowEmpty ariaLabel="Hora de fin" />
+          </div>
         </div>
+
         <label>
           Dónde (si no es en el alquiler)
           <input
@@ -120,8 +137,8 @@ export function QuickVisitDialog({ propertyId, onClose }: { propertyId?: string;
           <button type="button" className="ghost" onClick={onClose}>
             Cancelar
           </button>
-          <button className="primary" disabled={save.isPending}>
-            Guardar visita
+          <button className="primary" disabled={saving}>
+            {editing ? 'Guardar cambios' : 'Guardar visita'}
           </button>
         </div>
       </form>

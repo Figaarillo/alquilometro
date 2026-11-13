@@ -13,7 +13,8 @@ export function visitWhere(v: VisitWithProperty) {
 
 export function VisitRow({ v }: { v: VisitWithProperty }) {
   const toggle = useAppMutation((done: boolean) => api.updateVisit(v.id, { done }))
-  const remove = useAppMutation(() => api.deleteVisit(v.id))
+  const remove = useAppMutation(() => api.deleteVisit(v.id), undefined, 'Visita borrada')
+  const [editing, setEditing] = useState(false)
   const [editingNotes, setEditingNotes] = useState(false)
   const [notes, setNotes] = useState(v.notes ?? '')
   const saveNotes = useAppMutation(() => api.updateVisit(v.id, { notes: notes.trim() || null }), () => setEditingNotes(false))
@@ -62,10 +63,14 @@ export function VisitRow({ v }: { v: VisitWithProperty }) {
         >
           📆
         </a>
+        <button className="ghost" title="Editar" onClick={() => setEditing(true)}>
+          ✏️
+        </button>
         <button className="ghost" title="Borrar" onClick={() => confirm('¿Borrar la visita?') && remove.mutate(undefined)}>
           🗑
         </button>
       </div>
+      {editing && <QuickVisitDialog visit={v} onClose={() => setEditing(false)} />}
     </li>
   )
 }

@@ -3,6 +3,12 @@ import { useEffect, useState } from 'react'
 import { CATEGORIES, DEFAULT_SETTINGS, type Settings } from '../../../shared/domain'
 import { api } from '../../api'
 import { BaseMap } from '../../components/BaseMap'
+import { Chips } from '../../components/Chips'
+
+const TIME_FORMATS = [
+  ['24h', '24 h (18:30)'],
+  ['12h', 'AM / PM (6:30 PM)'],
+] as const
 import { qk, useSettings } from '../../hooks'
 import { money } from '../../lib/format'
 import { formatBytes } from '../../lib/image'
@@ -73,6 +79,22 @@ export function SettingsPage() {
       </div>
 
       <StorageCard />
+
+      <div className="card">
+        <div className="card-head">
+          <h3>Formato de hora</h3>
+          <span className="muted small">Para agendar y ver visitas</span>
+        </div>
+        <Chips
+          options={TIME_FORMATS}
+          value={s.timeFormat ?? '24h'}
+          onChange={(v) => {
+            const next = { ...s, timeFormat: v ?? '24h' }
+            setS(next)
+            save.mutate(next)
+          }}
+        />
+      </div>
 
       <div className="grid-2">
         <div className="card">

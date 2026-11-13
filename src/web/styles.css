@@ -780,3 +780,34 @@ dl.kv .kv-row { display: contents; }
 .size-m2 { max-width: 180px; }
 .neg-flag { padding: 0.45rem 0.7rem !important; border: 1px solid var(--border); border-radius: 10px; }
 .neg-flag:has(input:checked) { border-color: var(--bad); background: color-mix(in srgb, var(--bad) 8%, transparent); }
+.grid-2 > .full-width { grid-column: 1 / -1; }
+
+/* ---------- Visita: alquiler con vista previa, día y hora ---------- */
+.picker { display: grid; gap: 0.5rem; margin-top: 0.3rem; }
+.picker-list { list-style: none; margin: 0; padding: 0.3rem; display: grid; gap: 0.3rem; max-height: 300px; overflow-y: auto; border: 1px solid var(--border); border-radius: 12px; }
+.picker-option, .picker-current {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) auto;
+  gap: 0.7rem;
+  align-items: center;
+  padding: 0.4rem;
+  background: var(--surface);
+  border: 1px solid transparent;
+  border-radius: 10px;
+  text-align: left;
+  white-space: normal;
+  font-weight: 400;
+}
+.picker-option.on { border-color: var(--primary); background: color-mix(in srgb, var(--primary) 8%, var(--surface)); }
+.picker-current { border-color: var(--border); grid-template-columns: 56px minmax(0, 1fr) auto auto; margin-top: 0.3rem; }
+.picker-current:has(> .muted:first-child) { grid-template-columns: 1fr auto; padding: 0.8rem; }
+.picker-thumb { width: 56px; height: 44px; object-fit: cover; border-radius: 8px; }
+.picker-info { display: grid; gap: 0.1rem; min-width: 0; }
+.picker-info strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.picker-change { color: var(--primary); font-weight: 600; }
+.date-row { display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; margin-top: 0.3rem; }
+.date-row input { width: auto; flex: 1; min-width: 150px; }
+.time-row { gap: 1.2rem; align-items: flex-start; }
+.time-select { display: flex; gap: 0.3rem; align-items: center; margin-top: 0.3rem; }
+.time-select select { width: auto; min-width: 64px; }

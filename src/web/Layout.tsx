@@ -5,8 +5,8 @@ import { QuickInboxDialog } from './features/inbox/QuickInboxDialog'
 import { NewPropertyDialog } from './features/properties/NewPropertyDialog'
 import { QuickVisitDialog } from './features/visits/QuickVisitDialog'
 import { useAuth } from './features/auth/AuthGate'
-import { useVisits } from './hooks'
-import { visitRange } from './lib/format'
+import { useSettings, useVisits } from './hooks'
+import { setHour12, visitRange } from './lib/format'
 
 const NAV: [string, string][] = [
   ['/', 'Ranking'],
@@ -26,6 +26,8 @@ export function Layout() {
   const [quickInbox, setQuickInbox] = useState(false)
   const visits = useVisits()
   const auth = useAuth()
+  // Antes de pintar fechas: todas las horas de la app respetan la preferencia de Ajustes.
+  setHour12(useSettings().timeFormat === '12h')
   const next = visits.data?.find((v) => !v.done && new Date(v.endAt ?? v.scheduledAt).getTime() > Date.now() - 3_600_000)
 
   return (
