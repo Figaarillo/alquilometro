@@ -7,6 +7,7 @@ import { ScoreBadge } from '../../components/ScoreBadge'
 import { useProperties, useSettings } from '../../hooks'
 import { moneyK, relativeDay } from '../../lib/format'
 import { ShareDialog } from '../share/ShareDialog'
+import { usePersistentState } from '../../lib/usePersistentState'
 
 type Sort = 'auto' | 'mine' | 'combo' | 'cost' | 'recent'
 
@@ -18,11 +19,16 @@ const SORTS: [Sort, string][] = [
   ['recent', 'Más recientes'],
 ]
 
+const isSort = (v: unknown): v is Sort => SORTS.some(([k]) => k === v)
+const isStatusFilter = (v: unknown): v is string =>
+  v === 'activos' || v === 'todos' || STATUSES.some(([k]) => k === v)
+
 export function RankingPage() {
   const props = useProperties()
   const settings = useSettings()
-  const [sort, setSort] = useState<Sort>('auto')
-  const [status, setStatus] = useState<string>('activos')
+  // Se recuerdan al salir y volver al Ranking (y entre sesiones en este dispositivo).
+  const [sort, setSort] = usePersistentState<Sort>('ranking.sort', 'auto', isSort)
+  const [status, setStatus] = usePersistentState<string>('ranking.status', 'activos', isStatusFilter)
   const [selecting, setSelecting] = useState(false)
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [sharing, setSharing] = useState(false)
