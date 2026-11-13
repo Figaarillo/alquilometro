@@ -142,11 +142,22 @@ function Field({ f, d, patch }: { f: FieldDef; d: Details; patch: Patch }) {
   }
 }
 
-export function DetailsForm({ details, onChange }: { details: Details; onChange: (d: Details) => void }) {
+export function DetailsForm({
+  details,
+  onChange,
+  only,
+  exclude,
+}: {
+  details: Details
+  onChange: (d: Details) => void
+  /** Títulos de secciones a mostrar (para ubicarlas en otro lugar de la pantalla). */
+  only?: string[]
+  exclude?: string[]
+}) {
   const patch: Patch = (p) => onChange({ ...details, ...p })
   return (
     <>
-      {SECTIONS.map((s) => (
+      {SECTIONS.filter((s) => (!only || only.includes(s.title)) && !exclude?.includes(s.title)).map((s) => (
         <fieldset key={s.title} className="card form-section">
           <legend>{s.title}</legend>
           <div className="fields">

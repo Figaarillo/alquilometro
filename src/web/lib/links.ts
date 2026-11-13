@@ -42,3 +42,12 @@ export function whatsappUrl(phone: string | null | undefined, text: string) {
   const number = !digits ? '' : digits.startsWith('54') ? digits : `549${digits.replace(/^0/, '')}`
   return `https://wa.me/${number}?text=${encodeURIComponent(text)}`
 }
+
+/**
+ * Primer mensaje de WhatsApp: si el contacto es un número (no un link de chat) y hay publicación
+ * cargada, arranca con el link así el dueño sabe por cuál le escribís.
+ */
+export function firstContactMessage(p: { contactPhone: string | null; listingUrl: string | null }) {
+  if (!p.contactPhone || isLink(p.contactPhone) || !p.listingUrl) return ''
+  return `¡Hola! ¿Cómo estás? Te escribo por este alquiler: ${p.listingUrl}\n¿Sigue disponible?`
+}

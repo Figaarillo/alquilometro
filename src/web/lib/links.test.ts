@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isLink, whatsappUrl } from './links'
+import { firstContactMessage, isLink, whatsappUrl } from './links'
 
 describe('whatsappUrl', () => {
   it('arma el link desde un número argentino', () => {
@@ -21,5 +21,18 @@ describe('whatsappUrl', () => {
     expect(isLink('wa.me/549')).toBe(true)
     expect(isLink('353 4152233')).toBe(false)
     expect(isLink(null)).toBe(false)
+  })
+})
+
+describe('firstContactMessage', () => {
+  const url = 'https://www.zonaprop.com.ar/x.html'
+  it('con número y publicación arma el mensaje con el link', () => {
+    expect(firstContactMessage({ contactPhone: '3534152233', listingUrl: url })).toContain(url)
+  })
+  it('si el contacto es un link de WhatsApp no agrega mensaje', () => {
+    expect(firstContactMessage({ contactPhone: 'https://wa.me/549353', listingUrl: url })).toBe('')
+  })
+  it('sin publicación no agrega mensaje', () => {
+    expect(firstContactMessage({ contactPhone: '3534152233', listingUrl: null })).toBe('')
   })
 })

@@ -9,7 +9,7 @@ import { BaseMap } from '../../components/BaseMap'
 import { ScoreBadge } from '../../components/ScoreBadge'
 import { useAppMutation, useProperty, useSettings } from '../../hooks'
 import { toast } from '../../lib/toast'
-import { isLink, mapsUrl, streetViewEmbedUrl, streetViewUrl, whatsappUrl } from '../../lib/links'
+import { firstContactMessage, isLink, mapsUrl, streetViewEmbedUrl, streetViewUrl, whatsappUrl } from '../../lib/links'
 import { QuickVisitDialog } from '../visits/QuickVisitDialog'
 import { VisitRow } from '../visits/VisitsPage'
 import { ShareDialog } from '../share/ShareDialog'
@@ -28,6 +28,7 @@ const TABS = [
 type Tab = (typeof TABS)[number][0]
 
 const EMBED_KEY = import.meta.env.VITE_GOOGLE_MAPS_EMBED_KEY as string | undefined
+const COSTS_SECTION = ['Costos mensuales']
 
 interface Draft {
   title: string
@@ -151,25 +152,15 @@ function PropertyView({ p }: { p: PropertyDetail }) {
         <div className="grid-2">
           <div>
             <ScoreBreakdown r={savedScore} />
+            <CostsCard r={savedScore} currency={p.details.currency} />
             {p.description && (
               <div className="card">
                 <h3>Descripción</h3>
                 <p className="pre">{p.description}</p>
               </div>
             )}
-            <div className="card">
-              <h3>Mis notas</h3>
-              <textarea
-                rows={5}
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                onBlur={() => notes !== (p.notes ?? '') && update.mutate({ notes: notes || null }, { onSuccess: () => toast('Notas guardadas') })}
-                placeholder="Impresiones, dudas, lo que te dijo el dueño…"
-              />
-            </div>
           </div>
           <div>
-            <CostsCard r={savedScore} currency={p.details.currency} />
             <div className="card">
               <h3>Contacto</h3>
               <p>
@@ -177,7 +168,7 @@ function PropertyView({ p }: { p: PropertyDetail }) {
               </p>
               <div className="row wrap">
                 {p.contactPhone && (
-                  <a className="button small" href={whatsappUrl(p.contactPhone, '')} target="_blank" rel="noreferrer">
+                  <a className="button small" href={whatsappUrl(p.contactPhone, firstContactMessage(p))} target="_blank" rel="noreferrer">
                     WhatsApp
                   </a>
                 )}
@@ -246,6 +237,19 @@ function PropertyView({ p }: { p: PropertyDetail }) {
               )}
             </div>
             <ImageGallery propertyId={p.id} images={p.images} />
+          </div>
+          {/* Notas al final y a lo ancho: es lo último que se completa. */}
+          <div className="card full-width">
+            <h3>Mis notas</h3>
+            <textarea
+              rows={5}
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              onBlur={() => notes !== (p.notes ?? '') && update.mutate({ notes: notes || null }, { onSuccess: () => toast('Notas guardadas') })}
+              placeholder="Impresiones, dudas, lo que te dijo el dueño…"
+            />
+          </div>
+          <div className="full-width">
             <button className="ghost danger" onClick={() => confirm('¿Borrar este alquiler con TODAS sus fotos, visitas y checklist? No se puede deshacer.') && remove.mutate(undefined)}>
               Borrar alquiler
             </button>
@@ -281,13 +285,15 @@ function PropertyView({ p }: { p: PropertyDetail }) {
                 </label>
               </div>
             </fieldset>
+            {/* Costos primero: es lo que más se mira y lo que más cambia. */}
+            <DetailsForm details={draft.details} onChange={(details) => setDraft((d) => ({ ...d, details }))} only={COSTS_SECTION} />
             <LocationPicker
               address={draft.address}
               lat={draft.lat}
               lng={draft.lng}
               onChange={(loc) => setDraft((d) => ({ ...d, ...loc }))}
             />
-            <DetailsForm details={draft.details} onChange={(details) => setDraft((d) => ({ ...d, details }))} />
+            <DetailsForm details={draft.details} onChange={(details) => setDraft((d) => ({ ...d, details }))} exclude={COSTS_SECTION} />
           </div>
           <aside className="datos-side">
             <div className="sticky">
