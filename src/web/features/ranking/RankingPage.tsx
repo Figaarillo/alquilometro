@@ -4,7 +4,7 @@ import { optionLabel, statusLabel, STATUSES } from '../../../shared/domain'
 import { scoreProperty } from '../../../shared/scoring'
 import { api } from '../../api'
 import { ScoreBadge } from '../../components/ScoreBadge'
-import { useProperties, useSettings } from '../../hooks'
+import { usePrefetchProperty, useProperties, useSettings } from '../../hooks'
 import { moneyK, relativeDay } from '../../lib/format'
 import { ShareDialog } from '../share/ShareDialog'
 import { usePersistentState } from '../../lib/usePersistentState'
@@ -26,6 +26,7 @@ const isStatusFilter = (v: unknown): v is string =>
 export function RankingPage() {
   const props = useProperties()
   const settings = useSettings()
+  const prefetch = usePrefetchProperty()
   // Se recuerdan al salir y volver al Ranking (y entre sesiones en este dispositivo).
   const [sort, setSort] = usePersistentState<Sort>('ranking.sort.v2', 'combo', isSort)
   const [status, setStatus] = usePersistentState<string>('ranking.status', 'activos', isStatusFilter)
@@ -124,6 +125,7 @@ export function RankingPage() {
               <li key={p.id}>
                 <Link
                   to={`/p/${p.id}`}
+                  onPointerDown={() => !selecting && prefetch(p.id)}
                   className={`rank-card ${selecting && selected.has(p.id) ? 'selected' : ''} ${p.placement !== 'normal' ? 'dimmed' : ''}`}
                   onClick={(e) => {
                     if (!selecting) return

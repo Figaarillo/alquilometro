@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import type { PropertyDetail, PropertyListItem } from '../shared/api'
 import { DEFAULT_SETTINGS } from '../shared/domain'
 import { api } from './api'
 import { toast } from './lib/toast'
@@ -16,7 +17,31 @@ export const qk = {
 }
 
 export const useProperties = () => useQuery({ queryKey: qk.properties, queryFn: api.properties })
-export const useProperty = (id: string) => useQuery({ queryKey: qk.property(id), queryFn: () => api.property(id) })
+/**
+ * Detalle de un alquiler. Mientras llega, se arma con lo que ya trajo el ranking (datos + portada):
+ * así la pantalla entra deslizándose completa, sin un "Cargando…" en el medio.
+ */
+export function useProperty(id: string) {
+  const qc = useQueryClient()
+  return useQuery({
+    queryKey: qk.property(id),
+    queryFn: () => api.property(id),
+    placeholderData: (): PropertyDetail | undefined => {
+      const it = qc.getQueryData<PropertyListItem[]>(qk.properties)?.find((x) => x.id === id)
+      if (!it) return undefined
+      const cover = it.coverImageId
+        ? [{ id: it.coverImageId, propertyId: it.id, mime: 'image/webp', caption: null, position: 0, createdAt: it.createdAt }]
+        : []
+      return { ...it, images: cover, visits: [], checks: [], guestRatings: [] }
+    },
+  })
+}
+
+/** Precarga el detalle al tocar una tarjeta: cuando la pantalla termina de deslizarse, los datos ya están. */
+export function usePrefetchProperty() {
+  const qc = useQueryClient()
+  return (id: string) => void qc.prefetchQuery({ queryKey: qk.property(id), queryFn: () => api.property(id), staleTime: 10_000 })
+}
 export const useVisits = () => useQuery({ queryKey: qk.visits, queryFn: api.visits })
 export const useChecklist = () => useQuery({ queryKey: qk.checklist, queryFn: api.checklist })
 
