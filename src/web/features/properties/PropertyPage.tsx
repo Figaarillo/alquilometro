@@ -166,6 +166,10 @@ function PropertyView({ p }: { p: PropertyDetail }) {
 
       {tab === 'resumen' && (
         <div className="grid-2">
+          {/* Fotos primero: es lo que más se mira al entrar a un alquiler. */}
+          <div className="full-width">
+            <ImageGallery propertyId={p.id} images={p.images} />
+          </div>
           <div>
             <ScoreBreakdown r={savedScore} />
             <CostsCard r={savedScore} currency={p.details.currency} />
@@ -252,7 +256,6 @@ function PropertyView({ p }: { p: PropertyDetail }) {
                 </p>
               )}
             </div>
-            <ImageGallery propertyId={p.id} images={p.images} />
           </div>
           {/* Notas al final y a lo ancho: es lo último que se completa. */}
           <div className="card full-width">

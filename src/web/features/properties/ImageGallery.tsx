@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react'
+import { Star, Trash2 } from 'lucide-react'
+import { useState } from 'react'
 import type { ImageMeta } from '../../../shared/api'
 import { api } from '../../api'
+import { PhotoCarousel } from '../../components/PhotoCarousel'
 import { useAppMutation } from '../../hooks'
 import { resizeImage } from '../../lib/image'
 import { toast } from '../../lib/toast'
@@ -22,8 +24,8 @@ export async function uploadPhotos(propertyId: string, files: File[], onProgress
   return { ok, failed }
 }
 
+/** Fotos del alquiler en el resumen: carrusel + subir, portada y borrar. */
 export function ImageGallery({ propertyId, images }: { propertyId: string; images: ImageMeta[] }) {
-  const [open, setOpen] = useState<number | null>(null)
   const [progress, setProgress] = useState<string | null>(null)
   // De a una: con fotos grandes del celu, una sola petición enorme es lo que más falla.
   const upload = useAppMutation(async (files: File[]) => {
@@ -32,71 +34,69 @@ export function ImageGallery({ propertyId, images }: { propertyId: string; image
     if (ok) toast(`${ok} foto(s) subida(s)`)
     failed.forEach((f) => toast.error(`${f.name}: ${f.reason}`))
   })
-  const cover = useAppMutation(api.setCover, undefined, 'Portada actualizada')
-  const remove = useAppMutation(api.deleteImage, () => setOpen(null), 'Foto borrada')
 
-  useEffect(() => {
-    if (open == null) return
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(null)
-      if (e.key === 'ArrowRight') setOpen((i) => (i == null ? i : (i + 1) % images.length))
-      if (e.key === 'ArrowLeft') setOpen((i) => (i == null ? i : (i - 1 + images.length) % images.length))
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [open, images.length])
+  const uploadButton = (
+    <label className="button small">
+      {upload.isPending ? (progress ?? 'Subiendo…') : '+ Subir fotos'}
+      <input
+        type="file"
+        accept="image/*"
+        multiple
+        hidden
+        disabled={upload.isPending}
+        onChange={(e) => {
+          const files = [...(e.target.files ?? [])]
+          if (files.length) upload.mutate(files)
+          e.target.value = ''
+        }}
+      />
+    </label>
+  )
 
-  const current = open != null ? images[open] : null
+  if (images.length === 0) {
+    return (
+      <div className="card">
+        <div className="card-head">
+          <h3>Fotos</h3>
+          {uploadButton}
+        </div>
+        <p className="muted small">Sin fotos todavía. Podés subir las de la publicación o las que saques en la visita.</p>
+      </div>
+    )
+  }
 
   return (
-    <div className="card">
-      <div className="card-head">
-        <h3>Fotos ({images.length})</h3>
-        <label className="button small">
-          {upload.isPending ? (progress ?? 'Subiendo…') : '+ Subir fotos'}
-          <input
-            type="file"
-            accept="image/*"
-            multiple
-            hidden
-            disabled={upload.isPending}
-            onChange={(e) => {
-              const files = [...(e.target.files ?? [])]
-              if (files.length) upload.mutate(files)
-              e.target.value = ''
-            }}
-          />
-        </label>
-      </div>
-      {images.length === 0 ? (
-        <p className="muted small">Sin fotos todavía. Podés subir las de la publicación o las que saques en la visita.</p>
-      ) : (
-        <div className="gallery">
-          {images.map((img, i) => (
-            <button key={img.id} className="gallery-item" onClick={() => setOpen(i)}>
-              <img src={api.imageUrl(img.id)} alt="" loading="lazy" />
-              {i === 0 && <span className="cover-tag">Portada</span>}
-            </button>
-          ))}
-        </div>
-      )}
-      {current && (
-        <div className="lightbox" onClick={() => setOpen(null)}>
-          <img src={api.imageUrl(current.id)} alt="" onClick={(e) => e.stopPropagation()} />
-          <div className="lightbox-bar" onClick={(e) => e.stopPropagation()}>
-            <button onClick={() => setOpen((open! - 1 + images.length) % images.length)}>←</button>
-            <span>
-              {open! + 1} / {images.length}
-            </span>
-            <button onClick={() => setOpen((open! + 1) % images.length)}>→</button>
-            {open !== 0 && <button onClick={() => cover.mutate(current.id)}>Usar de portada</button>}
-            <button className="danger" onClick={() => confirm('¿Borrar la foto?') && remove.mutate(current.id)}>
-              Borrar
-            </button>
-            <button onClick={() => setOpen(null)}>Cerrar</button>
-          </div>
-        </div>
-      )}
+    <div className="card photos">
+      <PhotoCarousel
+        photos={images.map((img) => ({ id: img.id, url: api.imageUrl(img.id) }))}
+        coverTag
+        footer={uploadButton}
+        actions={(i, close) => <PhotoAdminActions image={images[i]} isCover={i === 0} onDeleted={() => close(Math.max(0, i - 1))} />}
+      />
     </div>
+  )
+}
+
+/** Portada y borrar, dentro del visor a pantalla completa. */
+function PhotoAdminActions({ image, isCover, onDeleted }: { image?: ImageMeta; isCover: boolean; onDeleted: () => void }) {
+  const cover = useAppMutation(api.setCover, undefined, 'Portada actualizada')
+  const remove = useAppMutation(api.deleteImage, onDeleted, 'Foto borrada')
+  if (!image) return null
+  return (
+    <>
+      {!isCover && (
+        <button className="icon-btn" onClick={() => cover.mutate(image.id)} title="Usar de portada" aria-label="Usar de portada">
+          <Star size={20} />
+        </button>
+      )}
+      <button
+        className="icon-btn"
+        onClick={() => confirm('¿Borrar la foto?') && remove.mutate(image.id)}
+        title="Borrar foto"
+        aria-label="Borrar foto"
+      >
+        <Trash2 size={20} />
+      </button>
+    </>
   )
 }
