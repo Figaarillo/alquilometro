@@ -348,7 +348,7 @@ function PropertyView({ p }: { p: PropertyDetail }) {
           {p.visits.length ? (
             <ul className="visits">
               {p.visits.map((v) => (
-                <VisitRow key={v.id} v={{ ...v, propertyTitle: p.title, propertyAddress: p.address, lat: p.lat, lng: p.lng }} />
+                <VisitRow key={v.id} linkProperty={false} v={{ ...v, propertyTitle: p.title, propertyAddress: p.address, lat: p.lat, lng: p.lng }} />
               ))}
             </ul>
           ) : (

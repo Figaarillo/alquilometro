@@ -11,7 +11,8 @@ export function visitWhere(v: VisitWithProperty) {
   return v.location || v.propertyAddress || (v.lat != null ? `${v.lat},${v.lng}` : '')
 }
 
-export function VisitRow({ v }: { v: VisitWithProperty }) {
+/** `linkProperty`: llevar al resumen del alquiler (no tiene sentido dentro del propio alquiler). */
+export function VisitRow({ v, linkProperty = true }: { v: VisitWithProperty; linkProperty?: boolean }) {
   const toggle = useAppMutation((done: boolean) => api.updateVisit(v.id, { done }))
   const remove = useAppMutation(() => api.deleteVisit(v.id), undefined, 'Visita borrada')
   const [editing, setEditing] = useState(false)
@@ -20,6 +21,7 @@ export function VisitRow({ v }: { v: VisitWithProperty }) {
   const saveNotes = useAppMutation(() => api.updateVisit(v.id, { notes: notes.trim() || null }), () => setEditingNotes(false))
   const where = visitWhere(v)
   const name = v.propertyTitle ?? v.title ?? 'Visita'
+  const propertyUrl = linkProperty && v.propertyId ? `/p/${v.propertyId}?tab=resumen` : null
 
   return (
     <li className={`visit ${v.done ? 'done' : ''}`}>
@@ -27,7 +29,7 @@ export function VisitRow({ v }: { v: VisitWithProperty }) {
       <div className="visit-body">
         <div className="visit-when">{visitRange(v.scheduledAt, v.endAt)}</div>
         <div>
-          {v.propertyId ? <Link to={`/p/${v.propertyId}?tab=visitas`}>{name}</Link> : <strong>{name}</strong>}
+          {propertyUrl ? <Link to={propertyUrl}>{name}</Link> : <strong>{name}</strong>}
           {where && <span className="muted"> · {where}</span>}
         </div>
         {editingNotes ? (
@@ -44,6 +46,11 @@ export function VisitRow({ v }: { v: VisitWithProperty }) {
         )}
       </div>
       <div className="visit-actions">
+        {propertyUrl && (
+          <Link to={propertyUrl} title="Ver resumen del alquiler">
+            🏠
+          </Link>
+        )}
         {where && (
           <a href={directionsUrl(where)} target="_blank" rel="noreferrer" title="Cómo llegar">
             🧭
