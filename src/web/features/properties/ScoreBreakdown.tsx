@@ -84,25 +84,42 @@ export function ScoreBreakdown({ r, compact }: { r: ScoreResult; compact?: boole
   )
 }
 
-export function CostsCard({ r, currency }: { r: ScoreResult; currency?: string | null }) {
+export function CostsCard({ r, currency, maxMonthly }: { r: ScoreResult; currency?: string | null; maxMonthly?: number }) {
   const c = r.costs
+  const tiles: [string, number | null | undefined][] = [
+    ['Alquiler', c.rent],
+    ['Expensas', c.expenses],
+    ['Servicios estimados', c.utilities],
+    ['Costo real mensual', c.realMonthly],
+    ['Para entrar', c.entryTotal],
+  ]
+  const within = maxMonthly != null && c.baseMonthly != null ? c.baseMonthly <= maxMonthly : null
+  const pct = maxMonthly && c.baseMonthly != null ? Math.min(100, Math.round((c.baseMonthly / maxMonthly) * 100)) : null
   return (
-    <div className="card">
-      <h3>Costos {currency === 'USD' && <span className="muted small">(convertido a $)</span>}</h3>
-      <dl className="kv">
-        <dt>Alquiler</dt>
-        <dd>{money(c.rent)}</dd>
-        <dt>Expensas</dt>
-        <dd>{money(c.expenses)}</dd>
-        <dt className="strong">Alquiler + expensas</dt>
-        <dd className="strong">{money(c.baseMonthly)}</dd>
-        <dt>Servicios estimados</dt>
-        <dd>{money(c.utilities)}</dd>
-        <dt className="strong">Costo real mensual</dt>
-        <dd className="strong">{money(c.realMonthly)}</dd>
-        <dt>Para entrar</dt>
-        <dd>{money(c.entryTotal)}</dd>
-      </dl>
+    <div className="card costs-card">
+      <div className="card-head">
+        <h3>Costos {currency === 'USD' && <span className="muted small">(convertido a $)</span>}</h3>
+        {within != null && <span className={`pill ${within ? 'pill-good' : 'pill-bad'}`}>{within ? 'Dentro del tope' : 'Pasa el tope'}</span>}
+      </div>
+      {pct != null && (
+        <div className="budget">
+          <div className="budget-labels">
+            <span>Alquiler + expensas {money(c.baseMonthly)}</span>
+            <span>tope {money(maxMonthly)}</span>
+          </div>
+          <div className={`budget-bar ${within ? '' : 'over'}`}>
+            <span style={{ width: `${pct}%` }} />
+          </div>
+        </div>
+      )}
+      <div className="cost-tiles">
+        {tiles.map(([label, v]) => (
+          <div key={label} className="cost-tile">
+            <span>{label}</span>
+            <strong>{money(v)}</strong>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }

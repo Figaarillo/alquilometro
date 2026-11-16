@@ -24,11 +24,14 @@ export function PhotoCarousel({
   photos,
   coverTag = false,
   footer,
+  overlay,
   actions,
 }: {
   photos: Photo[]
   coverTag?: boolean
   footer?: ReactNode
+  /** Contenido encima de las fotos (título, botones): la portada inmersiva del alquiler. */
+  overlay?: ReactNode
   actions?: PhotoActions
 }) {
   const trackRef = useRef<HTMLDivElement>(null)
@@ -67,6 +70,7 @@ export function PhotoCarousel({
             </button>
           </>
         )}
+        {overlay}
       </div>
       {(footer || (photos.length > 1 && photos.length <= MAX_DOTS)) && (
         <div className="photos-foot">

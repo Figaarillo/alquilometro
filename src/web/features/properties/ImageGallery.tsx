@@ -1,5 +1,5 @@
 import { Star, Trash2 } from 'lucide-react'
-import { useState } from 'react'
+import { type ReactNode, useState } from 'react'
 import type { ImageMeta } from '../../../shared/api'
 import { api } from '../../api'
 import { PhotoCarousel } from '../../components/PhotoCarousel'
@@ -24,8 +24,8 @@ export async function uploadPhotos(propertyId: string, files: File[], onProgress
   return { ok, failed }
 }
 
-/** Fotos del alquiler en el resumen: carrusel + subir, portada y borrar. */
-export function ImageGallery({ propertyId, images }: { propertyId: string; images: ImageMeta[] }) {
+/** Fotos del alquiler en el resumen: carrusel + subir, portada y borrar. Con `overlay`, es la portada inmersiva. */
+export function ImageGallery({ propertyId, images, overlay }: { propertyId: string; images: ImageMeta[]; overlay?: ReactNode }) {
   const [progress, setProgress] = useState<string | null>(null)
   // De a una: con fotos grandes del celu, una sola petición enorme es lo que más falla.
   const upload = useAppMutation(async (files: File[]) => {
@@ -53,6 +53,20 @@ export function ImageGallery({ propertyId, images }: { propertyId: string; image
     </label>
   )
 
+  if (images.length === 0 && overlay) {
+    return (
+      <div className="card photos">
+        <div className="carousel hero-empty">
+          <div className="hero-empty-cta">
+            <span>Sin fotos todavía</span>
+            {uploadButton}
+          </div>
+          {overlay}
+        </div>
+      </div>
+    )
+  }
+
   if (images.length === 0) {
     return (
       <div className="card">
@@ -71,6 +85,7 @@ export function ImageGallery({ propertyId, images }: { propertyId: string; image
         photos={images.map((img) => ({ id: img.id, url: api.imageUrl(img.id) }))}
         coverTag
         footer={uploadButton}
+        overlay={overlay}
         actions={(i, close) => <PhotoAdminActions image={images[i]} isCover={i === 0} onDeleted={() => close(Math.max(0, i - 1))} />}
       />
     </div>
