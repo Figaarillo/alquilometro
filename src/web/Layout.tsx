@@ -23,6 +23,9 @@ const NAV: [string, string][] = [
 /** Profundidad de una pantalla: las secciones del menú son 1, el detalle de un alquiler es 2. */
 const depthOf = (path: string) => (path.startsWith('/p/') ? 2 : 1)
 
+/** Las 3 pestañas del centro de la barra de abajo, en orden: entre ellas la pantalla se desliza de costado. */
+const TAB_ORDER = ['/visitas', '/', '/mapa']
+
 /**
  * Dirección de la animación al cambiar de pantalla, como en iOS:
  * entrar a un detalle desliza desde la derecha (push), volver desliza hacia la derecha (pop)
@@ -40,7 +43,14 @@ function useNavDirection(pathname: string, key: string) {
     savedScroll.set(prevKey.current, window.scrollY)
     const from = depthOf(prev.current)
     const to = depthOf(pathname)
-    const dir = to > from ? 'push' : to < from ? 'pop' : to === 2 ? (navType === 'POP' ? 'pop' : 'push') : 'fade'
+    const a = TAB_ORDER.indexOf(prev.current)
+    const b = TAB_ORDER.indexOf(pathname)
+    const dir =
+      to > from ? 'push'
+      : to < from ? 'pop'
+      : to === 2 ? (navType === 'POP' ? 'pop' : 'push')
+      : a >= 0 && b >= 0 ? (b > a ? 'tab-next' : 'tab-prev')
+      : 'fade'
     document.documentElement.dataset.nav = dir
     prev.current = pathname
   }
