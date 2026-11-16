@@ -15,8 +15,8 @@ import {
   Share2,
   Trophy,
 } from 'lucide-react'
-import { useState, type ComponentType } from 'react'
-import { NavLink, useNavigate } from 'react-router'
+import { useEffect, useState, type ComponentType } from 'react'
+import { NavLink, useLocation, useNavigate } from 'react-router'
 import { useAuth } from '../features/auth/AuthGate'
 import { useInbox } from '../features/inbox/InboxPage'
 import { BottomSheet } from './BottomSheet'
@@ -32,9 +32,9 @@ const MENU: [string, string, Icon][] = [
   ['/ajustes', 'Ajustes del puntaje', Settings],
 ]
 
-function Tab({ to, label, icon: I }: { to: string; label: string; icon: Icon }) {
+function Tab({ to, label, icon: I, onClick }: { to: string; label: string; icon: Icon; onClick: () => void }) {
   return (
-    <NavLink to={to} end={to === '/'} className="tab-item">
+    <NavLink to={to} end={to === '/'} className="tab-item" onClick={onClick}>
       <I size={22} />
       <span>{label}</span>
     </NavLink>
@@ -57,6 +57,9 @@ export function MobileTabbar({
   const pendingCount = inbox.data?.filter((i) => !i.done).length ?? 0
   const [sheet, setSheet] = useState<'menu' | 'actions' | null>(null)
   const close = () => setSheet(null)
+  // Si cambiás de pantalla (por ejemplo tocando otra pestaña), el menú abierto se cierra.
+  const { pathname } = useLocation()
+  useEffect(() => setSheet(null), [pathname])
   const go = (to: string) => {
     close()
     navigate(to)
@@ -76,11 +79,11 @@ export function MobileTabbar({
           </span>
           <span>Menú</span>
         </button>
-        <Tab to="/visitas" label="Visitas" icon={CalendarDays} />
-        <NavLink to="/" end className="tab-item fab" aria-label="Ranking">
+        <Tab to="/visitas" label="Visitas" icon={CalendarDays} onClick={close} />
+        <NavLink to="/" end className="tab-item fab" aria-label="Ranking" onClick={close}>
           <Trophy size={26} />
         </NavLink>
-        <Tab to="/mapa" label="Mapa" icon={Map} />
+        <Tab to="/mapa" label="Mapa" icon={Map} onClick={close} />
         <button className={`tab-item ${sheet === 'actions' ? 'active' : ''}`} onClick={() => setSheet(sheet === 'actions' ? null : 'actions')}>
           <Plus size={22} />
           <span>Agregar</span>
