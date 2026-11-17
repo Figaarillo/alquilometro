@@ -1024,16 +1024,18 @@ html[data-nav='pop']::view-transition-old(*.page) { animation: vt-out-to-right 3
 html[data-nav='pop']::view-transition-new(*.page) { animation: vt-in-from-left 380ms var(--ios-ease) both; }
 
 /* Pestañas del detalle: fundido suave del contenido. */
-.tab-pane { animation: vt-fade-in 220ms var(--ios-ease) both; }
+/* `backwards` y no `both`: si el transform queda aplicado al terminar, los `position: fixed` de adentro
+   (como la barra de Guardar cambios) se ubican respecto de la pestaña y no de la pantalla. */
+.tab-pane { animation: vt-fade-in 220ms var(--ios-ease) backwards; }
 
 /* Modales: en el celu suben como sheet de iOS; en compu aparecen con un leve zoom. */
 @keyframes backdrop-in { from { opacity: 0; } }
 @keyframes modal-in { from { opacity: 0; transform: translateY(14px) scale(0.98); } }
 @keyframes sheet-up { from { transform: translateY(100%); } }
 .modal-backdrop { animation: backdrop-in 220ms ease both; }
-.modal { animation: modal-in 280ms var(--ios-ease) both; }
+.modal { animation: modal-in 280ms var(--ios-ease) backwards; }
 @media (max-width: 900px) {
-  .modal { animation: sheet-up 380ms var(--ios-ease) both; }
+  .modal { animation: sheet-up 380ms var(--ios-ease) backwards; }
 }
 
 /* Feedback al tocar: se "hunde" apenas, como los botones de iOS. */
