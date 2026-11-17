@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+import { ArrowUpDown, ChevronDown, ListFilter, Share, X } from 'lucide-react'
+import { useDeferredValue, useMemo, useState, type ReactNode } from 'react'
 import { Link } from 'react-router'
 import { optionLabel, statusLabel, STATUSES } from '../../../shared/domain'
 import { scoreProperty } from '../../../shared/scoring'
@@ -8,6 +9,8 @@ import { usePrefetchProperty, useProperties, useSettings } from '../../hooks'
 import { moneyK, relativeDay } from '../../lib/format'
 import { ShareDialog } from '../share/ShareDialog'
 import { usePersistentState } from '../../lib/usePersistentState'
+import { matchesQuery, searchText } from '../../lib/search'
+import { SearchFab } from '../../components/SearchFab'
 
 type Sort = 'auto' | 'mine' | 'combo' | 'cost' | 'recent'
 
@@ -18,6 +21,48 @@ const SORTS: [Sort, string][] = [
   ['cost', 'Más barato'],
   ['recent', 'Más recientes'],
 ]
+const SORT_SHORT: Record<Sort, string> = { combo: 'Promedio', auto: 'Automático', mine: 'Mi nota', cost: 'Más barato', recent: 'Recientes' }
+
+const STATUS_FILTERS: [string, string][] = [
+  ['activos', 'Activas'],
+  ['todos', 'Todas'],
+  ['ocultos', 'Ocultas'],
+  ...STATUSES.map(([k, l]): [string, string] => [k, l]),
+]
+
+/** Pastilla compacta con un select nativo invisible encima: en el celu abre el selector del sistema. */
+function PillSelect({
+  icon,
+  label,
+  value,
+  options,
+  onChange,
+  active,
+  title,
+}: {
+  icon: ReactNode
+  label: string
+  value: string
+  options: [string, string][]
+  onChange: (v: string) => void
+  active?: boolean
+  title: string
+}) {
+  return (
+    <label className={`pill-select ${active ? 'on' : ''}`} title={title}>
+      {icon}
+      <span>{label}</span>
+      <ChevronDown size={14} className="pill-chevron" />
+      <select value={value} onChange={(e) => onChange(e.target.value)} aria-label={title}>
+        {options.map(([k, l]) => (
+          <option key={k} value={k}>
+            {l}
+          </option>
+        ))}
+      </select>
+    </label>
+  )
+}
 
 const isSort = (v: unknown): v is Sort => SORTS.some(([k]) => k === v)
 const isStatusFilter = (v: unknown): v is string =>
@@ -33,6 +78,8 @@ export function RankingPage() {
   const [selecting, setSelecting] = useState(false)
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [sharing, setSharing] = useState(false)
+  const [query, setQuery] = useState('')
+  const deferredQuery = useDeferredValue(query)
   const toggle = (id: string) =>
     setSelected((prev) => {
       const next = new Set(prev)
@@ -57,7 +104,7 @@ export function RankingPage() {
         const s = scoreProperty(p, settings)
         const combo =
           s.total != null && p.myRating != null ? (s.total + p.myRating * 10) / 2 : (s.total ?? (p.myRating != null ? p.myRating * 10 : null))
-        return { p, s, combo }
+        return { p, s, combo, text: searchText(p) }
       })
     const by = (f: (r: (typeof list)[number]) => number | null, asc = false) =>
       list.sort((a, b) => {
@@ -75,38 +122,48 @@ export function RankingPage() {
     if (sort === 'combo') by((r) => r.combo)
     if (sort === 'cost') by((r) => r.s.costs.baseMonthly, true)
     if (sort === 'recent') by((r) => new Date(r.p.createdAt).getTime())
-    return list
+    // La posición (#) es la del ranking completo, aunque la búsqueda esconda algunos.
+    return list.map((r, i) => ({ ...r, pos: i + 1 }))
   }, [props.data, settings, sort, status])
+  const visible = useMemo(() => rows.filter((r) => matchesQuery(r.text, deferredQuery)), [rows, deferredQuery])
 
   if (props.isLoading) return <p className="muted">Cargando…</p>
   if (props.error) return <p className="error">No pude cargar: {String(props.error)}</p>
 
   return (
-    <section>
-      <div className="page-head">
+    <section className="ranking-page">
+      <div className="page-head rank-head">
         <h1>Ranking</h1>
-        <button className={selecting ? 'primary' : ''} onClick={() => (selecting ? stopSelecting() : setSelecting(true))}>
-          {selecting ? 'Cancelar selección' : '🔗 Compartir'}
+        <button
+          className={`round-btn ${selecting ? 'on' : ''}`}
+          onClick={() => (selecting ? stopSelecting() : setSelecting(true))}
+          aria-label={selecting ? 'Cancelar selección' : 'Compartir alquileres'}
+          title={selecting ? 'Cancelar selección' : 'Compartir alquileres'}
+        >
+          {selecting ? <X size={20} /> : <Share size={19} />}
         </button>
-        <div className="filters">
-          <select value={status} onChange={(e) => setStatus(e.target.value)}>
-            <option value="activos">Activas (sin descartadas)</option>
-            <option value="todos">Todas</option>
-            <option value="ocultos">Ocultas</option>
-            {STATUSES.map(([k, l]) => (
-              <option key={k} value={k}>
-                {l}
-              </option>
-            ))}
-          </select>
-          <select value={sort} onChange={(e) => setSort(e.target.value as Sort)}>
-            {SORTS.map(([k, l]) => (
-              <option key={k} value={k}>
-                Ordenar: {l}
-              </option>
-            ))}
-          </select>
-        </div>
+      </div>
+      <div className="filter-bar">
+        <PillSelect
+          icon={<ListFilter size={15} />}
+          label={STATUS_FILTERS.find(([k]) => k === status)?.[1] ?? 'Activas'}
+          value={status}
+          options={STATUS_FILTERS}
+          onChange={setStatus}
+          active={status !== 'activos'}
+          title="Qué alquileres mostrar"
+        />
+        <PillSelect
+          icon={<ArrowUpDown size={15} />}
+          label={SORT_SHORT[sort]}
+          value={sort}
+          options={SORTS}
+          onChange={(v) => setSort(v as Sort)}
+          title="Orden"
+        />
+        <span className="filter-count">
+          {deferredQuery.trim() ? `${visible.length} de ${rows.length}` : rows.length}
+        </span>
       </div>
 
       {rows.length === 0 ? (
@@ -114,10 +171,15 @@ export function RankingPage() {
           <p>Todavía no cargaste alquileres.</p>
           <p className="muted">Usá “+ Alquiler” (en el celu: “Agregar”, abajo a la derecha).</p>
         </div>
+      ) : visible.length === 0 ? (
+        <div className="empty">
+          <p>Nada coincide con “{deferredQuery.trim()}”.</p>
+          <p className="muted">Probá con otra palabra: barrio, calle, precio, “patio”, “gas natural”…</p>
+        </div>
       ) : (
         <>
         <ul className="rank-cards mobile-only">
-          {rows.map(({ p, s }, i) => {
+          {visible.map(({ p, s, pos }) => {
             const nearest = [...s.distances].sort((a, b) => a.km - b.km)[0]
             const overBudget = s.costs.baseMonthly != null && s.costs.baseMonthly > settings.maxMonthlyTotal
             const warnings = s.adjustments.length + s.alerts.filter((a) => a.level !== 'info').length
@@ -135,7 +197,7 @@ export function RankingPage() {
                 >
                   <div className="rank-photo">
                     {p.coverImageId ? <img src={api.imageUrl(p.coverImageId)} alt="" loading="lazy" /> : <span>🏠</span>}
-                    <span className="rank-pos">#{i + 1}</span>
+                    <span className="rank-pos">#{pos}</span>
                     {selecting && <span className="rank-check">{selected.has(p.id) ? '✓' : ''}</span>}
                     {p.placement === 'oculto' && <span className="rank-hidden">Oculto</span>}
                   </div>
@@ -184,7 +246,7 @@ export function RankingPage() {
               </tr>
             </thead>
             <tbody>
-              {rows.map(({ p, s }, i) => {
+              {visible.map(({ p, s, pos }) => {
                 const nearest = [...s.distances].sort((a, b) => a.km - b.km)[0]
                 const overBudget = s.costs.baseMonthly != null && s.costs.baseMonthly > settings.maxMonthlyTotal
                 const warnings = s.adjustments.length + s.alerts.filter((a) => a.level !== 'info').length
@@ -195,7 +257,7 @@ export function RankingPage() {
                         <input type="checkbox" checked={selected.has(p.id)} onChange={() => toggle(p.id)} />
                       </td>
                     )}
-                    <td className="muted">{i + 1}</td>
+                    <td className="muted">{pos}</td>
                     <td>
                       {p.coverImageId ? (
                         <img className="thumb" src={api.imageUrl(p.coverImageId)} alt="" loading="lazy" />
@@ -239,6 +301,9 @@ export function RankingPage() {
           </table>
         </div>
         </>
+      )}
+      {!selecting && rows.length > 0 && (
+        <SearchFab value={query} onChange={setQuery} placeholder="Buscar calle, precio, detalle…" />
       )}
       {selecting && (
         <div className="selection-bar">

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useState } from 'react'
-import { CATEGORIES, DEFAULT_SETTINGS, type Settings } from '../../../shared/domain'
+import { CATEGORIES, DEFAULT_SETTINGS, type CategoryKey, type Settings } from '../../../shared/domain'
 import { api } from '../../api'
 import { BaseMap } from '../../components/BaseMap'
 import { Chips } from '../../components/Chips'
@@ -13,6 +13,27 @@ import { qk, useSettings } from '../../hooks'
 import { money } from '../../lib/format'
 import { formatBytes } from '../../lib/image'
 import { toast } from '../../lib/toast'
+
+/** Qué mira cada categoría del puntaje (sale de src/shared/scoring.ts). */
+const CATEGORY_HELP: Record<CategoryKey, string> = {
+  ubicacion: 'Distancia a tu zona preferida más cercana, ruido, tránsito y seguridad del barrio.',
+  costo: 'Alquiler + expensas contra tu tope, alquiler contra el máximo ideal y el gasto real sumando servicios estimados.',
+  espacio: 'Cantidad de habitaciones, tamaño (m² o chica/mediana/grande), si es dúplex y cantidad de baños.',
+  servicios: 'Gas natural o garrafa, calefacción, agua caliente a gas o eléctrica, aire acondicionado y fibra óptica.',
+  estado: 'Estado general, humedad, luz natural, ventilación y orientación.',
+  exteriores: 'Patio (cuántos y de qué tipo), asador y si hay espacios compartidos con otros.',
+  cochera: 'Cochera para auto vale lo máximo, lugar para moto la mitad y sin cochera nada.',
+  contrato: 'Cada cuánto aumenta, con qué índice, cuánto dura el contrato y cuánto cuesta entrar.',
+}
+
+/** Cómo se siente un peso relativo, en palabras. */
+function weightLevel(pct: number): [number, string] {
+  if (pct === 0) return [0, 'No cuenta']
+  if (pct < 8) return [1, 'Poco']
+  if (pct < 15) return [2, 'Medio']
+  if (pct < 22) return [3, 'Mucho']
+  return [4, 'Clave']
+}
 
 /** Límite del volumen de Postgres en Railway (plan actual). */
 const VOLUME_BYTES = 1024 ** 3
@@ -118,20 +139,33 @@ export function SettingsPage() {
 
         <div className="card">
           <h3>Importancia de cada categoría</h3>
-          {CATEGORIES.map(([k, label]) => (
-            <label key={k} className="weight">
-              <span>
-                {label} <span className="muted small">{Math.round((s.weights[k] / totalWeight) * 100)}%</span>
-              </span>
-              <input
-                type="range"
-                min={0}
-                max={40}
-                value={s.weights[k]}
-                onChange={(e) => setS({ ...s, weights: { ...s.weights, [k]: Number(e.target.value) } })}
-              />
-            </label>
-          ))}
+          <p className="muted small weights-help">
+            Cada barra decide cuánto pesa esa categoría en el <strong>puntaje automático</strong>. El % es su parte del total: si subís una, las
+            demás pesan un poco menos. En 0 la categoría no se tiene en cuenta. Las penalizaciones fijas (no aceptan mascotas, mucha humedad, todo
+            eléctrico, pasarse del tope) se restan aparte y no dependen de estas barras.
+          </p>
+          {CATEGORIES.map(([k, label]) => {
+            const pct = Math.round((s.weights[k] / totalWeight) * 100)
+            const [lvl, lvlLabel] = weightLevel(s.weights[k] ? pct : 0)
+            return (
+              <label key={k} className={`weight ${lvl === 0 ? 'off' : ''}`}>
+                <span className="weight-head">
+                  <span className="weight-name">{label}</span>
+                  <span className={`weight-level lvl-${lvl}`}>
+                    {lvlLabel} · {pct}%
+                  </span>
+                </span>
+                <input
+                  type="range"
+                  min={0}
+                  max={40}
+                  value={s.weights[k]}
+                  onChange={(e) => setS({ ...s, weights: { ...s.weights, [k]: Number(e.target.value) } })}
+                />
+                <span className="muted small weight-desc">{CATEGORY_HELP[k]}</span>
+              </label>
+            )
+          })}
         </div>
       </div>
 
