@@ -160,6 +160,41 @@ describe('mascotas y tamaño', () => {
     expect(scoreProperty(at({ ...sinM2, sizeCategory: 'mediana' }), S).missing).not.toContain('Tamaño (m² o chica/mediana/grande)')
   })
 
+  it('un lugar grande de 1 habitación vale más espacio que uno chico de 2, aunque sea dúplex', () => {
+    const espacio = (d: Details) => scoreProperty(at(d), S).categories.find((c) => c.key === 'espacio')!.score!
+    const sinM2 = { ...ideal, areaM2: null }
+    const chicoDuplex2 = espacio({ ...sinM2, sizeCategory: 'chica', isDuplex: true, bedrooms: 2 })
+    const grande1 = espacio({ ...sinM2, sizeCategory: 'grande', isDuplex: false, bedrooms: 1 })
+    const grandeDuplex2 = espacio({ ...sinM2, sizeCategory: 'grande', isDuplex: true, bedrooms: 2 })
+    expect(grande1).toBeGreaterThan(chicoDuplex2)
+    expect(grandeDuplex2).toBeGreaterThan(95)
+    expect(chicoDuplex2).toBeLessThan(60)
+  })
+
+  it('los m² también definen si es chico o grande para habitaciones y dúplex', () => {
+    const factor = (d: Details, label: string) =>
+      scoreProperty(at(d), S).categories.find((c) => c.key === 'espacio')!.factors.find((f) => f.label === label)!.score
+    expect(factor({ ...ideal, areaM2: 38 }, 'Habitaciones')).toBe(70)
+    expect(factor({ ...ideal, areaM2: 38 }, 'Dúplex')).toBe(60)
+    expect(factor({ ...ideal, areaM2: 90 }, 'Dúplex')).toBe(100)
+  })
+
+  it('estado general malo resta puntos fijos', () => {
+    const r = scoreProperty(at({ ...ideal, condition: 'malo' }), S)
+    expect(adj(r, /estado/i)).toBe(-10)
+    expect(adj(scoreProperty(at({ ...ideal, condition: 'regular' }), S), /estado/i)).toBe(0)
+  })
+
+  it('el tamaño del patio cuenta: chico resta, grande suma', () => {
+    const patio = (size: 'chico' | 'mediano' | 'grande') =>
+      scoreProperty(at({ ...ideal, patios: [{ surface: 'pasto', size }] }), S)
+        .categories.find((c) => c.key === 'exteriores')!
+        .factors.find((f) => f.label === 'Patio')!.score
+    expect(patio('chico')).toBe(75)
+    expect(patio('mediano')).toBe(90)
+    expect(patio('grande')).toBe(100)
+  })
+
   it('si están los m², mandan sobre la categoría', () => {
     const f = (d: Details) =>
       scoreProperty(at(d), S)

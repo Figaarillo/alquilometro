@@ -171,19 +171,35 @@ function costFactors(c: CostSummary, s: Settings): Factor[] {
   return f
 }
 
+/** Chica / mediana / grande: desde los m² si están, si no desde lo que cargaste. */
+function sizeClass(d: Details): 'chica' | 'mediana' | 'grande' | null {
+  if (known(d.areaM2)) return d.areaM2 < 45 ? 'chica' : d.areaM2 < 80 ? 'mediana' : 'grande'
+  return d.sizeCategory ?? null
+}
+
 function spaceFactors(d: Details): Factor[] {
+  const size = sizeClass(d)
+  // Habitaciones y dúplex valen según el tamaño: 2 habitaciones apretadas no valen más que un lugar amplio.
+  const bedrooms = known(d.bedrooms)
+    ? d.bedrooms >= 2
+      ? size === 'chica' ? 70 : 100
+      : d.bedrooms === 1
+        ? size === 'grande' ? 60 : 45
+        : 20
+    : null
+  const duplex = known(d.isDuplex) ? (d.isDuplex ? pick({ chica: 60, mediana: 85, grande: 100 }, size) ?? 100 : 45) : null
   return [
     {
       label: 'Habitaciones',
-      weight: 3,
-      score: known(d.bedrooms) ? (d.bedrooms >= 2 ? 100 : d.bedrooms === 1 ? 45 : 20) : null,
+      weight: 2,
+      score: bedrooms,
       detail: known(d.bedrooms) ? `${d.bedrooms} hab.` : undefined,
     },
-    { label: 'Dúplex', weight: 1.5, score: bool(d.isDuplex, 100, 45) },
+    { label: 'Dúplex', weight: 1.5, score: duplex },
     {
       // Los m² mandan; si no se publican, alcanza con "chica / mediana / grande".
       label: 'Tamaño',
-      weight: 1.5,
+      weight: 2.5,
       score: known(d.areaM2)
         ? piecewise([[30, 20], [45, 50], [60, 75], [80, 95], [100, 100]], d.areaM2)
         : pick({ chica: 40, mediana: 75, grande: 100 }, d.sizeCategory),
@@ -200,7 +216,11 @@ function patioScore(d: Details): number | null {
   let score = 70
   if (patios.some((p) => p.surface === 'pasto' || p.surface === 'mixto')) score += 20
   if (patios.length > 1) score += 10
-  return Math.min(100, score)
+  // El tamaño cuenta: alcanza con que uno sea grande; chico solo si todos los que tienen dato lo son.
+  const sizes = patios.map((p) => p.size).filter(known)
+  if (sizes.includes('grande')) score += 10
+  else if (sizes.length && sizes.every((x) => x === 'chico')) score -= 15
+  return Math.max(0, Math.min(100, score))
 }
 
 function outdoorFactors(d: Details): Factor[] {
@@ -293,6 +313,7 @@ function adjustmentsFor(d: Details, c: CostSummary, s: Settings, alerts: Alert[]
 
   if (d.gas === 'ninguno') out.push({ label: 'Todo eléctrico: gastos altos', points: -10 })
   if (d.humidity === 'mucha') out.push({ label: 'Mucha humedad', points: -8 })
+  if (d.condition === 'malo') out.push({ label: 'Estado general malo', points: -10 })
   return out
 }
 

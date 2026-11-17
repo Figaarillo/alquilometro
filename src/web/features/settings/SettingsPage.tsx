@@ -18,10 +18,10 @@ import { toast } from '../../lib/toast'
 const CATEGORY_HELP: Record<CategoryKey, string> = {
   ubicacion: 'Distancia a tu zona preferida más cercana, ruido, tránsito y seguridad del barrio.',
   costo: 'Alquiler + expensas contra tu tope, alquiler contra el máximo ideal y el gasto real sumando servicios estimados.',
-  espacio: 'Cantidad de habitaciones, tamaño (m² o chica/mediana/grande), si es dúplex y cantidad de baños.',
+  espacio: 'Tamaño (m² o chica/mediana/grande), habitaciones, si es dúplex y baños. El tamaño pesa más: 2 habitaciones o un dúplex en un lugar chico valen menos.',
   servicios: 'Gas natural o garrafa, calefacción, agua caliente a gas o eléctrica, aire acondicionado y fibra óptica.',
   estado: 'Estado general, humedad, luz natural, ventilación y orientación.',
-  exteriores: 'Patio (cuántos y de qué tipo), asador y si hay espacios compartidos con otros.',
+  exteriores: 'Patio (cuántos, de qué tipo y de qué tamaño), asador y si hay espacios compartidos con otros.',
   cochera: 'Cochera para auto vale lo máximo, lugar para moto la mitad y sin cochera nada.',
   contrato: 'Cada cuánto aumenta, con qué índice, cuánto dura el contrato y cuánto cuesta entrar.',
 }
@@ -141,8 +141,8 @@ export function SettingsPage() {
           <h3>Importancia de cada categoría</h3>
           <p className="muted small weights-help">
             Cada barra decide cuánto pesa esa categoría en el <strong>puntaje automático</strong>. El % es su parte del total: si subís una, las
-            demás pesan un poco menos. En 0 la categoría no se tiene en cuenta. Las penalizaciones fijas (no aceptan mascotas, mucha humedad, todo
-            eléctrico, pasarse del tope) se restan aparte y no dependen de estas barras.
+            demás pesan un poco menos. En 0 la categoría no se tiene en cuenta. Las penalizaciones fijas (no aceptan mascotas, mucha humedad, estado
+            malo, todo eléctrico, pasarse del tope) se restan aparte y no dependen de estas barras.
           </p>
           {CATEGORIES.map(([k, label]) => {
             const pct = Math.round((s.weights[k] / totalWeight) * 100)
