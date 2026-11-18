@@ -117,15 +117,42 @@ button.small, .button.small { padding: 0.3rem 0.6rem; font-size: 0.85rem; }
 }
 .topbar nav a.active { background: var(--surface-2); color: var(--text); font-weight: 600; }
 .top-actions { display: flex; gap: 0.4rem; }
+.brand { display: flex; align-items: center; gap: 0.4rem; white-space: nowrap; }
+.brand .page-title { display: none; }
 
-.next-visit {
-  display: block;
-  padding: 0.5rem 1rem;
-  background: color-mix(in srgb, var(--primary) 12%, var(--surface));
-  color: var(--text);
-  text-decoration: none;
-  border-bottom: 1px solid var(--border);
-  font-size: 0.9rem;
+/* Íconos del header: acciones de la pantalla (slot) + campana de visitas. */
+.top-icons, .header-slot { display: flex; align-items: center; gap: 0.3rem; }
+.top-icon {
+  position: relative; width: 40px; height: 40px; padding: 0; flex-shrink: 0; display: grid; place-items: center;
+  border: 0; border-radius: 999px; background: transparent; color: var(--text); box-shadow: none;
+}
+.top-icon:hover { background: var(--surface-2); }
+.top-icon.on { background: var(--text); color: var(--bg); }
+.top-icon .tab-badge { top: 2px; right: 0; }
+
+.bell { position: relative; }
+.bell-backdrop { position: fixed; inset: 0; z-index: 1940; }
+.bell-pop {
+  position: absolute; top: calc(100% + 8px); right: 0; z-index: 1950;
+  width: min(340px, calc(100vw - 24px)); max-height: 70vh; overflow-y: auto;
+  background: var(--surface); color: var(--text); border: 1px solid var(--border);
+  border-radius: 18px; box-shadow: 0 12px 40px rgb(0 0 0 / 0.2); padding: 0.4rem;
+  transform-origin: top right; animation: bell-in 180ms var(--ios-ease);
+}
+@keyframes bell-in { from { opacity: 0; transform: scale(0.94); } }
+.bell-title { font-weight: 700; padding: 0.5rem 0.7rem 0.3rem; }
+.bell-empty { padding: 0 0.7rem 0.4rem; margin: 0; }
+.bell-list { list-style: none; margin: 0; padding: 0; }
+.bell-list a {
+  display: grid; gap: 0.1rem; padding: 0.6rem 0.7rem; border-radius: 12px;
+  color: var(--text); text-decoration: none;
+}
+.bell-list a:hover, .bell-list a:active { background: var(--surface-2); }
+.bell-when { font-size: 0.8rem; font-weight: 700; color: var(--primary); }
+.bell-name { font-weight: 600; }
+.bell-all {
+  display: block; text-align: center; padding: 0.6rem; margin-top: 0.2rem;
+  border-top: 1px solid var(--border); font-weight: 600; text-decoration: none; color: var(--primary);
 }
 
 main { max-width: 1280px; margin: 0 auto; padding: 1.2rem 1rem 4rem; }
@@ -558,8 +585,18 @@ dl.kv .kv-row { display: contents; }
     background: linear-gradient(150deg, var(--primary), color-mix(in srgb, var(--primary) 55%, #000));
     border: 0;
   }
-  .brand { color: #fff; font-size: 1.1rem; }
-  .next-visit { margin: 0.6rem 0.8rem 0; border-radius: 12px; border: 1px solid var(--border); }
+  .topbar { flex-wrap: nowrap; justify-content: space-between; gap: 0.5rem; padding-block: 0.7rem; }
+  .brand { color: #fff; font-size: 1.25rem; min-width: 0; }
+  /* En el celu: logo chiquito + en qué pantalla estás, en vez del nombre de la app. */
+  .brand .brand-name { display: none; }
+  .brand .page-title { display: inline; overflow: hidden; text-overflow: ellipsis; }
+  .topbar .top-icon { color: #fff; }
+  .topbar .top-icon:hover { background: rgb(255 255 255 / 0.15); }
+  .topbar .top-icon.on { background: #fff; color: var(--primary); }
+  .top-icon .tab-badge { box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 80%, #000); }
+  /* El título ya está en el header: el h1 de la página sobra (y si la fila queda vacía, también). */
+  .app:not(.route-detail) .page-head > h1 { display: none; }
+  .app:not(.route-detail) .page-head:not(:has(> :not(h1))) { display: none; }
 
   main { padding: 1rem 0.8rem calc(120px + env(safe-area-inset-bottom)); }
   h1 { font-size: 1.3rem; }
@@ -985,7 +1022,7 @@ dl.kv .kv-row { display: contents; }
 
 @media (max-width: 900px) {
   /* En el detalle, la foto sube hasta arriba de todo: sin la barra de marca. */
-  .route-detail .topbar, .route-detail .next-visit { display: none; }
+  .route-detail .topbar { display: none; }
   .route-detail main { padding-top: 0; }
   .hero { margin: 0 -0.8rem 0.9rem; }
   .hero .photos { border-radius: 0; border: 0; box-shadow: none; }
@@ -1082,11 +1119,6 @@ html[data-nav='tab-prev']::view-transition-old(*.page) { animation: vt-tab-out-r
 /* ---------- Ranking: encabezado, filtros compactos y buscador flotante ---------- */
 .rank-head { flex-wrap: nowrap; margin-bottom: 0.6rem; }
 .rank-head h1 { margin: 0; }
-.round-btn {
-  width: 42px; height: 42px; padding: 0; flex-shrink: 0; display: grid; place-items: center;
-  border-radius: 999px; background: var(--surface); color: var(--text); box-shadow: var(--shadow);
-}
-.round-btn.on { background: var(--text); color: var(--bg); border-color: var(--text); }
 
 .filter-bar { display: flex; gap: 0.45rem; align-items: center; margin-bottom: 0.9rem; }
 .pill-select {

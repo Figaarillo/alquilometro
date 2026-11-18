@@ -11,6 +11,7 @@ import { ShareDialog } from '../share/ShareDialog'
 import { usePersistentState } from '../../lib/usePersistentState'
 import { matchesQuery, searchText } from '../../lib/search'
 import { SearchFab } from '../../components/SearchFab'
+import { HeaderActions } from '../../components/HeaderSlot'
 
 type Sort = 'auto' | 'mine' | 'combo' | 'cost' | 'recent'
 
@@ -134,15 +135,17 @@ export function RankingPage() {
     <section className="ranking-page">
       <div className="page-head rank-head">
         <h1>Ranking</h1>
+      </div>
+      <HeaderActions>
         <button
-          className={`round-btn ${selecting ? 'on' : ''}`}
+          className={`top-icon ${selecting ? 'on' : ''}`}
           onClick={() => (selecting ? stopSelecting() : setSelecting(true))}
           aria-label={selecting ? 'Cancelar selección' : 'Compartir alquileres'}
           title={selecting ? 'Cancelar selección' : 'Compartir alquileres'}
         >
           {selecting ? <X size={20} /> : <Share size={19} />}
         </button>
-      </div>
+      </HeaderActions>
       <div className="filter-bar">
         <PillSelect
           icon={<ListFilter size={15} />}

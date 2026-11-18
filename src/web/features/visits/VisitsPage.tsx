@@ -4,6 +4,7 @@ import type { VisitWithProperty } from '../../../shared/api'
 import { api } from '../../api'
 import { useAppMutation, useVisits } from '../../hooks'
 import { visitRange } from '../../lib/format'
+import { upcomingVisits } from '../../lib/nav'
 import { directionsUrl, googleCalendarUrl } from '../../lib/links'
 import { QuickVisitDialog } from './QuickVisitDialog'
 
@@ -85,9 +86,8 @@ export function VisitRow({ v, linkProperty = true }: { v: VisitWithProperty; lin
 export function VisitsPage() {
   const visits = useVisits()
   const [open, setOpen] = useState(false)
-  const now = Date.now() - 3_600_000
   const all = visits.data ?? []
-  const upcoming = all.filter((v) => !v.done && new Date(v.endAt ?? v.scheduledAt).getTime() >= now)
+  const upcoming = upcomingVisits(all)
   const past = all.filter((v) => !upcoming.includes(v)).reverse()
 
   return (

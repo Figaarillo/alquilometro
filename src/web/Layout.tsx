@@ -5,20 +5,11 @@ import { QuickInboxDialog } from './features/inbox/QuickInboxDialog'
 import { NewPropertyDialog } from './features/properties/NewPropertyDialog'
 import { QuickVisitDialog } from './features/visits/QuickVisitDialog'
 import { useAuth } from './features/auth/AuthGate'
-import { useSettings, useVisits } from './hooks'
-import { setHour12, visitRange } from './lib/format'
-
-const NAV: [string, string][] = [
-  ['/', 'Ranking'],
-  ['/pendientes', 'Pendientes'],
-  ['/mapa', 'Mapa'],
-  ['/procesos', 'Procesos'],
-  ['/visitas', 'Visitas'],
-  ['/mensajes', 'Mensajes'],
-  ['/checklist', 'Checklist'],
-  ['/compartidos', 'Compartidos'],
-  ['/ajustes', 'Ajustes'],
-]
+import { HeaderSlotProvider, HeaderSlotTarget } from './components/HeaderSlot'
+import { VisitsBell } from './components/VisitsBell'
+import { useSettings } from './hooks'
+import { setHour12 } from './lib/format'
+import { NAV, pageTitle } from './lib/nav'
 
 /** Profundidad de una pantalla: las secciones del menú son 1, el detalle de un alquiler es 2. */
 const depthOf = (path: string) => (path.startsWith('/p/') ? 2 : 1)
@@ -65,19 +56,21 @@ export function Layout() {
   const [quickVisit, setQuickVisit] = useState(false)
   const [newProperty, setNewProperty] = useState(false)
   const [quickInbox, setQuickInbox] = useState(false)
-  const visits = useVisits()
   const auth = useAuth()
   const { pathname, key } = useLocation()
   useNavDirection(pathname, key)
   // Antes de pintar fechas: todas las horas de la app respetan la preferencia de Ajustes.
   setHour12(useSettings().timeFormat === '12h')
-  const next = visits.data?.find((v) => !v.done && new Date(v.endAt ?? v.scheduledAt).getTime() > Date.now() - 3_600_000)
 
   return (
+    <HeaderSlotProvider>
     <div className={`app ${pathname.startsWith('/p/') ? 'route-detail' : ''}`}>
       <header className="topbar">
+        {/* En escritorio, la marca; en el celu, el logo chiquito + en qué pantalla estás. */}
         <Link to="/" className="brand">
-          🏠 Alquilómetro
+          <span aria-hidden="true">🏠</span>
+          <span className="brand-name">Alquilómetro</span>
+          <span className="page-title">{pageTitle(pathname)}</span>
         </Link>
         <nav className="desktop-nav">
           {NAV.map(([to, label]) => (
@@ -86,6 +79,10 @@ export function Layout() {
             </NavLink>
           ))}
         </nav>
+        <div className="top-icons">
+          <HeaderSlotTarget />
+          <VisitsBell />
+        </div>
         <div className="top-actions desktop-only">
           {auth.authRequired && (
             <button className="ghost" onClick={() => void auth.logout()} title="Cerrar sesión">
@@ -99,13 +96,6 @@ export function Layout() {
           </button>
         </div>
       </header>
-      {next && (
-        <Link to="/visitas" className="next-visit">
-          📅 Próxima visita: <strong>{visitRange(next.scheduledAt, next.endAt)}</strong> —{' '}
-          {next.propertyTitle ?? next.title}
-          {next.location ? ` · ${next.location}` : next.propertyAddress ? ` · ${next.propertyAddress}` : ''}
-        </Link>
-      )}
       <main>
         {/* Cada pantalla es una "página" que entra y sale con View Transitions (React 19 + API nativa del navegador). */}
         <ViewTransition key={pathname} enter="page" exit="page" default="none">
@@ -123,5 +113,6 @@ export function Layout() {
       {newProperty && <NewPropertyDialog onClose={() => setNewProperty(false)} />}
       {quickInbox && <QuickInboxDialog onClose={() => setQuickInbox(false)} />}
     </div>
+    </HeaderSlotProvider>
   )
 }
