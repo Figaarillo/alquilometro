@@ -125,7 +125,7 @@ export function SharesPage() {
       <div className="page-head">
         <h1>Compartidos</h1>
         <span className="muted small">
-          Para crear uno nuevo: en el <Link to="/">Ranking</Link> tocá “🔗 Compartir” y elegí los alquileres.
+          Para crear uno nuevo: en el <Link to="/">Ranking</Link> tocá el ícono de compartir (arriba a la derecha) y elegí los alquileres.
         </span>
       </div>
 
