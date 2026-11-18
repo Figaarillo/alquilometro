@@ -119,8 +119,12 @@ export function MobileTabbar({
           </li>
           <li>
             <button onClick={action(onNewInbox)}>
-              <NotebookPen size={20} /> Anotar pendiente
-              <span className="muted small">número, link o dato suelto</span>
+              <NotebookPen size={20} />
+              {/* Título y ayuda apilados: así la ayuda queda debajo del título, alineada con él. */}
+              <span className="sheet-text">
+                Anotar pendiente
+                <span className="muted small">número, link o dato suelto</span>
+              </span>
             </button>
           </li>
           <li>
