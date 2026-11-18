@@ -1,5 +1,6 @@
 import { Search, X } from 'lucide-react'
-import { useRef, useState } from 'react'
+import { type CSSProperties, useRef, useState } from 'react'
+import { useKeyboardInset } from '../lib/keyboard'
 
 /**
  * Lupa flotante abajo a la derecha: al tocarla se estira hacia la izquierda y
@@ -8,6 +9,8 @@ import { useRef, useState } from 'react'
 export function SearchFab({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder: string }) {
   const [open, setOpen] = useState(value !== '')
   const input = useRef<HTMLInputElement>(null)
+  // Con el teclado abierto se apoya justo encima de él en vez de quedar tapada.
+  const kb = useKeyboardInset(open)
 
   const openIt = () => {
     setOpen(true)
@@ -21,7 +24,11 @@ export function SearchFab({ value, onChange, placeholder }: { value: string; onC
   }
 
   return (
-    <div className={`search-fab ${open ? 'open' : ''}`} role="search">
+    <div
+      className={`search-fab ${open ? 'open' : ''} ${kb ? 'over-keyboard' : ''}`}
+      style={kb ? ({ '--kb': `${kb}px` } as CSSProperties) : undefined}
+      role="search"
+    >
       <input
         ref={input}
         type="search"

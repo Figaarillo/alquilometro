@@ -1138,6 +1138,8 @@ html[data-nav='tab-prev']::view-transition-old(*.page) { animation: vt-tab-out-r
   /* Que la última tarjeta no quede tapada por la lupa. */
   .ranking-page { padding-bottom: 64px; }
 }
+/* Teclado abierto: la barra de tabs queda tapada, así que se apoya sobre el teclado. */
+.search-fab.over-keyboard { bottom: calc(var(--kb) + 12px); transition: width 340ms var(--ios-ease), bottom 180ms ease; }
 
 /* ---------- Ajustes: leyenda de la importancia ---------- */
 .weights-help { margin: 0 0 0.8rem; }
