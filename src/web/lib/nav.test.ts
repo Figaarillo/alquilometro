@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { pageTitle, upcomingVisits } from './nav'
+import { pageTitle, todayVisits, upcomingVisits } from './nav'
 
 describe('pageTitle', () => {
   it('la raíz es el Ranking', () => {
@@ -45,5 +45,28 @@ describe('upcomingVisits', () => {
     const later = v('2026-11-20T10:00:00Z')
     const sooner = v('2026-11-19T10:00:00Z')
     expect(upcomingVisits([later, sooner], now)).toEqual([sooner, later])
+  })
+})
+
+describe('todayVisits', () => {
+  // Fechas en hora local: "hoy" es el día del celu, no el de UTC.
+  const at = (day: number, h: number, m = 0) => new Date(2026, 10, day, h, m).toISOString()
+  const now = new Date(2026, 10, 18, 12, 0).getTime()
+  const v = (scheduledAt: string, done = false) => ({ scheduledAt, endAt: null, done })
+
+  it('incluye las de hoy que todavía no pasaron', () => {
+    expect(todayVisits([v(at(18, 17))], now)).toHaveLength(1)
+  })
+
+  it('incluye la de última hora del día', () => {
+    expect(todayVisits([v(at(18, 23, 59))], now)).toHaveLength(1)
+  })
+
+  it('deja afuera las de mañana', () => {
+    expect(todayVisits([v(at(19, 0, 30))], now)).toEqual([])
+  })
+
+  it('deja afuera las de hoy que ya pasaron o están hechas', () => {
+    expect(todayVisits([v(at(18, 9)), v(at(18, 17), true)], now)).toEqual([])
   })
 })

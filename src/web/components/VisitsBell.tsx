@@ -3,12 +3,12 @@ import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router'
 import { useVisits } from '../hooks'
 import { visitRange } from '../lib/format'
-import { upcomingVisits } from '../lib/nav'
+import { todayVisits } from '../lib/nav'
 
-/** Campana del header: cuántas visitas próximas hay y, al tocarla, la lista. */
+/** Campana del header: cuántas visitas quedan hoy y, al tocarla, la lista. */
 export function VisitsBell() {
   const visits = useVisits()
-  const upcoming = upcomingVisits(visits.data ?? [])
+  const upcoming = todayVisits(visits.data ?? [])
   const [open, setOpen] = useState(false)
   // Al navegar (tocando una visita, por ejemplo) se cierra sola.
   const { pathname } = useLocation()
@@ -25,9 +25,9 @@ export function VisitsBell() {
       <button
         className={`top-icon ${open ? 'on' : ''}`}
         onClick={() => setOpen(!open)}
-        aria-label={`Próximas visitas (${upcoming.length})`}
+        aria-label={`Visitas de hoy (${upcoming.length})`}
         aria-expanded={open}
-        title="Próximas visitas"
+        title="Visitas de hoy"
       >
         <Bell size={20} />
         {upcoming.length > 0 && <span className="tab-badge">{upcoming.length}</span>}
@@ -35,10 +35,10 @@ export function VisitsBell() {
       {open && (
         <>
           <div className="bell-backdrop" onClick={() => setOpen(false)} />
-          <div className="bell-pop" role="dialog" aria-label="Próximas visitas">
-            <div className="bell-title">Próximas visitas</div>
+          <div className="bell-pop" role="dialog" aria-label="Visitas de hoy">
+            <div className="bell-title">Visitas de hoy</div>
             {upcoming.length === 0 ? (
-              <p className="muted bell-empty">No tenés visitas agendadas.</p>
+              <p className="muted bell-empty">No te quedan visitas por hoy.</p>
             ) : (
               <ul className="bell-list">
                 {upcoming.map((v) => (
