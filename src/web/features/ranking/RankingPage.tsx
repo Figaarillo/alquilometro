@@ -1,5 +1,6 @@
-import { ArrowUpDown, ChevronDown, ListFilter, Share, X } from 'lucide-react'
-import { useDeferredValue, useMemo, useState, type ReactNode } from 'react'
+import { ArrowUpDown, ListFilter, Share, X } from 'lucide-react'
+import { useDeferredValue, useMemo, useState } from 'react'
+import { PillSelect } from '../../components/PillSelect'
 import { Link } from 'react-router'
 import { optionLabel, statusLabel, STATUSES } from '../../../shared/domain'
 import { scoreProperty } from '../../../shared/scoring'
@@ -30,40 +31,6 @@ const STATUS_FILTERS: [string, string][] = [
   ['ocultos', 'Ocultas'],
   ...STATUSES.map(([k, l]): [string, string] => [k, l]),
 ]
-
-/** Pastilla compacta con un select nativo invisible encima: en el celu abre el selector del sistema. */
-function PillSelect({
-  icon,
-  label,
-  value,
-  options,
-  onChange,
-  active,
-  title,
-}: {
-  icon: ReactNode
-  label: string
-  value: string
-  options: [string, string][]
-  onChange: (v: string) => void
-  active?: boolean
-  title: string
-}) {
-  return (
-    <label className={`pill-select ${active ? 'on' : ''}`} title={title}>
-      {icon}
-      <span>{label}</span>
-      <ChevronDown size={14} className="pill-chevron" />
-      <select value={value} onChange={(e) => onChange(e.target.value)} aria-label={title}>
-        {options.map(([k, l]) => (
-          <option key={k} value={k}>
-            {l}
-          </option>
-        ))}
-      </select>
-    </label>
-  )
-}
 
 const isSort = (v: unknown): v is Sort => SORTS.some(([k]) => k === v)
 const isStatusFilter = (v: unknown): v is string =>

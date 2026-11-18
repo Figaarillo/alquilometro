@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { Link } from 'react-router'
 import type { PropertyListItem } from '../../../shared/api'
-import { STATUSES, type Status } from '../../../shared/domain'
+import { ListFilter } from 'lucide-react'
+import { STATUSES, statusLabel, type Status } from '../../../shared/domain'
+import { PillSelect } from '../../components/PillSelect'
 import type { ScoreResult } from '../../../shared/scoring'
 import { api } from '../../api'
 import { ScoreBadge } from '../../components/ScoreBadge'
@@ -18,20 +20,24 @@ export function ProcessList({ rows, onMove }: { rows: Row[]; onMove: (id: string
   const firstWithItems = STATUSES.find(([k]) => k !== 'descartado' && (counts.get(k) ?? 0) > 0)?.[0] ?? 'nuevo'
   const [active, setActive] = useState<Status | 'todos'>(firstWithItems)
 
-  const visible = active === 'todos' ? rows.filter((r) => r.p.status !== 'descartado') : rows.filter((r) => r.p.status === active)
+  const totalActive = rows.filter((r) => r.p.status !== 'descartado').length
+  const visible =active === 'todos' ? rows.filter((r) => r.p.status !== 'descartado') : rows.filter((r) => r.p.status === active)
   const groups = active === 'todos' ? STATUSES.filter(([k]) => k !== 'descartado') : STATUSES.filter(([k]) => k === active)
 
   return (
     <div>
-      <div className="status-chips">
-        <button className={`chip ${active === 'todos' ? 'on' : ''}`} onClick={() => setActive('todos')}>
-          Todos <b>{rows.filter((r) => r.p.status !== 'descartado').length}</b>
-        </button>
-        {STATUSES.map(([k, label]) => (
-          <button key={k} className={`chip ${active === k ? 'on' : ''}`} onClick={() => setActive(k)}>
-            {label} <b>{counts.get(k)}</b>
-          </button>
-        ))}
+      {/* Una sola pastilla: el selector nativo muestra todas las etapas (8 chips no entran en el celu). */}
+      <div className="filter-bar">
+        <PillSelect
+          icon={<ListFilter size={15} />}
+          label={active === 'todos' ? 'Todas las etapas' : statusLabel(active)}
+          value={active}
+          options={[['todos', `Todas (${totalActive})`], ...STATUSES.map(([k, l]): [string, string] => [k, `${l} (${counts.get(k)})`])]}
+          onChange={(v) => setActive(v as Status | 'todos')}
+          active={active !== 'todos'}
+          title="Etapa del proceso"
+        />
+        <span className="filter-count">{visible.length}</span>
       </div>
 
       {visible.length === 0 && <p className="muted">No hay alquileres en esta etapa.</p>}
